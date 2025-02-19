@@ -39,18 +39,18 @@ const BACKGROUND_MUSIC_LIST: MusicData[] = [
     //     link: "https://rhythora.us-lax-1.linodeobjects.com/chariot_v4.mp3"
     // },
     // {
-    //     name: "Athazagoraphobia",
+    //     name: "athazagoraphobia",
     //     author: "igaveuponmusic",
     //     link: "https://rhythora.us-lax-1.linodeobjects.com/athazagoraphobia.mp3"
     // },
     // {
-    //     name: "Moonbath (Remix)",
+    //     name: "moonbath (remix)",
     //     author: "igaveuponmusic",
     //     link: "https://rhythora.us-lax-1.linodeobjects.com/moonbath (remix).mp3"
     // }
 ];
 
-export function playRandomBackgroundMusic(): void {
+export function playRandomBackgroundMusic() {
     const music = BACKGROUND_MUSIC_LIST[Math.floor(Math.random() * BACKGROUND_MUSIC_LIST.length)];
     setToMusicLink(music.link);
     global.musicPlayerData.song = music;

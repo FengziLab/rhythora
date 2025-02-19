@@ -1,7 +1,7 @@
 <script lang="ts">
     import { audioContext, musicSource, musicVolumeNode, setMusicVolume } from "$lib/system/audioContext";
     import { playRandomBackgroundMusic } from "$lib/system/audioHelpers";
-    
+
     let displayText = $state("Debug");
     function updateValue() {
         try {

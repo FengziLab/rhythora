@@ -1,17 +1,6 @@
 /* Game */
 export type Screen = "home" | "song-select" | "song-confirm" | "game" | "editor";
 
-export interface MusicData {
-    name: string,
-    author: string,
-    link: string
-}
-
-export interface MusicPlayerData {
-    song: MusicData,
-    isPlaying: boolean
-}
-
 export interface UserSettings {
     latency: number,
     musicVolume: number,
@@ -19,12 +8,24 @@ export interface UserSettings {
     hitSoundVolume: number
 }
 
+export interface MusicData {
+    name: string,
+    author: string,
+    link: string
+}
+export interface MusicPlayerData {
+    song: MusicData,
+    isPlaying: boolean
+}
+
+
+
 export interface Global {
     screen: Screen,
     userSettings: UserSettings,
     musicPlayerData: MusicPlayerData,
     waitingCount: number,
-    bottomAnimationReverseDirection: boolean
+    screenAnimationReverseDirection: boolean
 }
 
 

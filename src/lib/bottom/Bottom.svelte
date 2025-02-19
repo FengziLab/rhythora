@@ -1,6 +1,6 @@
 <script lang="ts">
     import { fly, type FlyParams } from "svelte/transition";
-    import { circOut, quartOut } from "svelte/easing";
+    import { circOut } from "svelte/easing";
     import HomeLeft from "./button-groups/HomeLeft.svelte";
     import SongConfirmLeft from "./button-groups/SongConfirmLeft.svelte";
     import HomeRight from "./button-groups/HomeRight.svelte";
@@ -8,14 +8,14 @@
     import { global } from "$lib/global.svelte";
 
     // Bottom panel style controls
-    let contentWidth: number = $state(0);
+    let contentWidth = $state(0);
     let leftTransition: FlyParams = $derived({
-        x: global.bottomAnimationReverseDirection ? -100 : 100,
+        x: global.screenAnimationReverseDirection ? -100 : 100,
         duration: 300,
         easing: circOut
     });
     let rightTransition: FlyParams = $derived({
-        x: global.bottomAnimationReverseDirection ? 100 : -100,
+        x: global.screenAnimationReverseDirection ? 100 : -100,
         duration: 300,
         easing: circOut
     });

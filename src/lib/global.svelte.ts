@@ -18,13 +18,13 @@ export const global: Global = $state({
         isPlaying: false
     },
     waitingCount: 0,
-    bottomAnimationReverseDirection: false
+    screenAnimationReverseDirection: false
 });
 
 /* Global state setters */
 export function setScreen(newScreen: Screen, reverseDirection = false) {
     global.screen = newScreen;
-    global.bottomAnimationReverseDirection = reverseDirection;
+    global.screenAnimationReverseDirection = reverseDirection;
 }
 
 export function startWaiting() {

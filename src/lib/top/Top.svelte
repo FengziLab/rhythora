@@ -26,7 +26,7 @@
             </svg>
         </button>
     </div>
-    
+
     <!-- Right button group -->
     <div class="h-full flex flex-row flex-nowrap gap-2 items-center justify-end">
         <!-- Debug widget -->
