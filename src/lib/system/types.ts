@@ -1,5 +1,5 @@
 /* Game */
-export type Screen = "home" | "song-select" | "song-confirm" | "game" | "editor";
+export type Screen = "home" | "song-select" | "game" | "editor";
 
 export interface UserSettings {
     latency: number,
@@ -11,14 +11,14 @@ export interface UserSettings {
 export interface MusicData {
     name: string,
     author: string,
-    link: string
+    link: string,
+    bpm: number,
+    offset: number
 }
 export interface MusicPlayerData {
     song: MusicData,
     isPlaying: boolean
 }
-
-
 
 export interface Global {
     screen: Screen,
@@ -29,16 +29,16 @@ export interface Global {
 }
 
 
+
 /* Beatmap */
+export type NoteType = "tap" | "hold" | "stay";
 
-export type NoteType = "tap" | "hold" | "touch";
-
-export interface TapPosition {
-    row: number,
+export interface PointPosition {
+    row: 1 | 2 | 3,
     xPos: number
 }
-export interface HoldPosition {
-    row: number,
+export interface LongPosition {
+    row: 1 | 2 | 3,
     startXPos: number,
     endXPos: number
 }
@@ -46,14 +46,14 @@ export interface HoldPosition {
 export type Note = {
     type: "tap",
     time: number,
-    position: TapPosition
+    position: PointPosition
 } | {
     type: "hold",
     time: number,
     duration: number,
-    position: HoldPosition
+    position: LongPosition
 } | {
-    type: "touch",
+    type: "stay",
     time: number,
-    position: TapPosition
+    position: PointPosition
 }

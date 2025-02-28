@@ -2,16 +2,22 @@
     import "../app.css";
     let { children } = $props();
     import { onMount } from "svelte";
+    import FlashEffect from "$lib/system/FlashEffect.svelte";
     import { initializeAudioContext } from "$lib/system/audioContext";
     import { playRandomBackgroundMusic } from "$lib/system/audioHelpers";
-    import { global } from "$lib/global.svelte";
+    import { global } from "$lib/system/global.svelte";
 
     let introElement: HTMLDivElement;
-    let startTextElement: HTMLSpanElement;
+    let introStartTextElement: HTMLSpanElement;
     let introOutStyles = $state(false);
+    let flashEffectElement: FlashEffect;
 
     /** Disable intro and enter the game */
     function introClick() {
+        // Remove intro-specific event listeners
+        window.removeEventListener("click", introClick);
+        window.removeEventListener("keyup", introClick);
+
         // Start sounds
         initializeAudioContext();
         // TODO: play sound effect
@@ -23,29 +29,31 @@
             introElement.remove();
         }, 1000);
 
-        // Remove intro-specific event listeners
-        window.removeEventListener("click", introClick);
-        window.removeEventListener("keyup", introClick);
+        // Background flashing effect
+        flashEffectElement.start();
     }
 
     // Can click whenever js is ready, also update hint text
     onMount(() => {
         window.addEventListener("click", introClick);
         window.addEventListener("keyup", introClick);
-        startTextElement.innerHTML = "- Click anywhere to start -";
+        introStartTextElement.innerHTML = "- Click anywhere to start -";
     });
 </script>
 
 <!-- Background -->
 <div class="absolute top-0 left-0 w-full h-full bg-[url(/assets/background2.jpg)] bg-no-repeat bg-cover bg-center brightness-50"></div>
-<div class="absolute top-0 left-0 w-full h-full {global.screen === "game" ?  "bg-black/50" : ""} backdrop-blur-3xl transition duration-1000 ease-circ-out">
+<div class="absolute top-0 left-0 w-full h-full {global.screen === "game" ?  "bg-black/50" : ""} backdrop-blur-3xl transition duration-1000 ease-circ-out overflow-clip">
+    <!-- Background music flashing effect -->
+    <FlashEffect bind:this={flashEffectElement} />
+
     {@render children()}
 </div>
 
 <!-- Intro screen -->
-<div bind:this={introElement} class="absolute top-0 left-0 w-full h-full backdrop-blur-3xl {introOutStyles ? "bg-black/0 -translate-y-full pointer-events-none" : "bg-black/50"} transition duration-1000 ease-[cubic-bezier(.18,.7,0,1)] flex flex-col flex-nowrap gap-36 items-center justify-center">
+<div bind:this={introElement} class="absolute top-0 left-0 w-full h-full backdrop-blur-3xl {introOutStyles ? "bg-black/0 -translate-y-full pointer-events-none" : "bg-black/50"} transition duration-1000 ease-[cubic-bezier(.18,.7,0,1)] flex flex-col flex-nowrap gap-36 items-center justify-center" hidden> <!-- DEBUG -->
     <span class="text-zinc-100 text-8xl font-comfortaa font-medium tracking-widest">Rhythora</span>
-    <span bind:this={startTextElement} class="text-zinc-100 text-lg font-poppins tracking-widest">- Loading... -</span>
+    <span bind:this={introStartTextElement} class="text-zinc-100 text-lg font-poppins tracking-widest">- Loading... -</span>
 </div>
 
 <!-- Too little screen space warning screen -->

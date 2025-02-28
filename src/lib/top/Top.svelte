@@ -3,12 +3,11 @@
     import Clock from "$lib/top/widgets/Clock.svelte";
     import NowPlaying from "./widgets/NowPlaying.svelte";
     import Waiting from "./widgets/Waiting.svelte";
-    import Debug from "./widgets/Debug.svelte";
-    import { global } from "$lib/global.svelte";
+    import { global } from "$lib/system/global.svelte";
 </script>
 
 <!-- Top panel (set height) -->
-<div class="w-full p-2 h-16 rounded-b-xl bg-zinc-700/30 {global.screen === "game" ? "-translate-y-full" : ""} transition duration-300 ease-circ-out flex flex-row flex-nowrap gap-2 items-center justify-between">
+<div class="w-full p-2 h-16 rounded-b-xl bg-zinc-700/30 {!(global.screen === "home" || global.screen === "song-select") ? "-translate-y-full" : ""} transition duration-300 ease-circ-out flex flex-row flex-nowrap gap-2 items-center justify-between">
     <!-- Left button group -->
     <div class="h-full flex flex-row flex-nowrap gap-2 justify-start">
         <!-- Settings button -->
@@ -29,8 +28,6 @@
 
     <!-- Right button group -->
     <div class="h-full flex flex-row flex-nowrap gap-2 items-center justify-end">
-        <!-- Debug widget -->
-        <Debug />
         <!-- Waiting widget -->
         <Waiting />
         <!-- Now Playing widget -->

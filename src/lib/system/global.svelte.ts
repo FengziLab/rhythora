@@ -13,7 +13,9 @@ export const global: Global = $state({
         song: {
             name: "???",
             author: "???",
-            link: ""
+            link: "",
+            bpm: -1,
+            offset: 0
         },
         isPlaying: false
     },
@@ -25,11 +27,4 @@ export const global: Global = $state({
 export function setScreen(newScreen: Screen, reverseDirection = false) {
     global.screen = newScreen;
     global.screenAnimationReverseDirection = reverseDirection;
-}
-
-export function startWaiting() {
-    global.waitingCount++;
-}
-export function stopWaiting() {
-    global.waitingCount--;
 }

@@ -1,9 +1,10 @@
 <script lang="ts">
-    import { global } from "$lib/global.svelte";
+    import { global } from "$lib/system/global.svelte";
 
     const displayText = $derived(`${global.musicPlayerData.song.name} - ${global.musicPlayerData.song.author}`);
 </script>
 
+<!-- Now Playing widget -->
 <button class="h-full px-4 rounded-lg hover:bg-zinc-500/50 active:translate-y-0.5 transition duration-100 ease-[ease] flex flex-row flex-nowrap gap-2 items-center justify-center">
     {#if global.musicPlayerData.isPlaying}
     <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="1.5" stroke="currentColor" class="size-6 stroke-zinc-100">
