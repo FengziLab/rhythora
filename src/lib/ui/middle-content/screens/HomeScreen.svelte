@@ -1,18 +1,14 @@
 <script lang="ts">
-    import { fly, type FlyParams } from "svelte/transition";
+    import { fly } from "svelte/transition";
     import { circOut } from "svelte/easing";
     import { global } from "$lib/system/global.svelte";
 
+    // Local states
     let isToFromRight = $derived((global.screen === "home") === global.screenAnimationReverseDirection);
-    let homeTransition: FlyParams = $derived({
-        x: isToFromRight ? -100 : 100,
-        duration: 300,
-        easing: circOut
-    });
 </script>
 
 <!-- Home screen content box -->
-<div in:fly={homeTransition} out:fly={homeTransition} class="row-start-1 col-start-1 w-[75%] max-padh:w-[85%] max-padv:w-full max-w-600 h-full mx-auto px-4 py-16 flex flex-row flex-nowrap gap-8">
+<div transition:fly={{ x: isToFromRight ? -100 : 100, duration: 300, easing: circOut }} class="row-start-1 col-start-1 w-[75%] max-padh:w-[85%] max-padv:w-full max-w-600 h-full mx-auto px-4 py-16 flex flex-row flex-nowrap gap-8">
 
     <!-- News content -->
     <div class="w-full h-full rounded-xl bg-zinc-700/30 border-b-2 border-zinc-700/30 overflow-clip">

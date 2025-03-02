@@ -1,4 +1,5 @@
 <script lang="ts">
+    // Local states
     let timeText = $state("");
 
     /** Update the displayed time in timer */
@@ -10,7 +11,7 @@
         timeText = `${hour}:${minute}:${second}`;
     }
 
-    // Update time
+    // Call update
     updateTime();
     setInterval(updateTime, 1000);
 </script>

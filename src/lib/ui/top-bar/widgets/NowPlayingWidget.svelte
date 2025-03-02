@@ -1,6 +1,7 @@
 <script lang="ts">
     import { global } from "$lib/system/global.svelte";
 
+    // Local states
     const displayText = $derived(`${global.musicPlayerData.song.name} - ${global.musicPlayerData.song.author}`);
 </script>
 

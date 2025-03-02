@@ -1,23 +1,23 @@
 <script lang="ts">
     import { global } from "$lib/system/global.svelte";
-    import Home from "./screens/Home.svelte";
-    import SongSelect from "./screens/SongSelect.svelte";
-    import Game from "./screens/Game.svelte";
-    import Editor from "./screens/Editor.svelte";
+    import HomeScreen from "./screens/HomeScreen.svelte";
+    import SongSelectScreen from "./screens/SongSelectScreen.svelte";
+    import GameScreen from "./screens/GameScreen.svelte";
+    import EditorScreen from "./screens/EditorScreen.svelte";
 </script>
 
 <!-- Middle section -->
 <div class="w-full h-full grid">
     <!-- Screens (self-controlled animations) -->
     {#if global.screen === "home"}
-    <Home />
+    <HomeScreen />
     {:else if global.screen === "song-select"}
     <!-- TODO -->
-    <SongSelect />
+    <SongSelectScreen />
     {:else if global.screen === "game"}
     <!-- TODO -->
-    <Game />
+    <GameScreen />
     {:else if global.screen === "editor"}
-    <Editor />
+    <EditorScreen />
     {/if}
 </div>

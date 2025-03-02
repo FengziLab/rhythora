@@ -1,7 +1,7 @@
 <script lang="ts">
-    // State control
-    let flashOpacity = $state(0);
+    // Local states
     let enabled = $state(false);
+    let flashOpacity = $state(0);
 
     /** Start flash animation */
     export function start() {

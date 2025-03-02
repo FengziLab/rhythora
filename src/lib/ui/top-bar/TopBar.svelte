@@ -1,8 +1,8 @@
 <script lang="ts">
-    import Account from "./widgets/Account.svelte";
-    import Clock from "$lib/top/widgets/Clock.svelte";
-    import NowPlaying from "./widgets/NowPlaying.svelte";
-    import Waiting from "./widgets/Waiting.svelte";
+    import AccountWidget from "./widgets/AccountWidget.svelte";
+    import ClockWidget from "./widgets/ClockWidget.svelte";
+    import NowPlayingWidget from "./widgets/NowPlayingWidget.svelte";
+    import WaitingWidget from "./widgets/WaitingWidget.svelte";
     import { global } from "$lib/system/global.svelte";
 </script>
 
@@ -29,12 +29,12 @@
     <!-- Right button group -->
     <div class="h-full flex flex-row flex-nowrap gap-2 items-center justify-end">
         <!-- Waiting widget -->
-        <Waiting />
+        <WaitingWidget />
         <!-- Now Playing widget -->
-        <NowPlaying />
+        <NowPlayingWidget />
         <!-- Clock widget -->
-        <Clock />
-        <!-- Account button -->
-        <Account />
+        <ClockWidget />
+        <!-- Account widget -->
+        <AccountWidget />
     </div>
 </div>

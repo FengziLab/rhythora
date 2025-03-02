@@ -44,19 +44,19 @@ export function initializeAudioContext() {
 }
 
 /** Fade to a music volume over a set time */
-export function setMusicVolume(value: number, seconds = 0.2) {
+export function fadeToMusicVolume(value: number, seconds = 0.2) {
     if (audioContext === null || musicVolumeNode === null) return false;
     musicVolumeNode.gain.linearRampToValueAtTime(value, audioContext.currentTime + seconds);
     return true;
 } 
 /** Fade to a sound effects volume over a set time */
-export function setSoundEffectsVolume(value: number, seconds = 0.2) {
+export function fadeToSoundEffectsVolume(value: number, seconds = 0.2) {
     if (audioContext === null || soundEffectsVolumeNode === null) return false;
     soundEffectsVolumeNode.gain.linearRampToValueAtTime(value, audioContext.currentTime + seconds);
     return true;
 } 
 /** Fade to a hit sound volume over a set time */
-export function setHitSoundVolume(value: number, seconds = 0.2) {
+export function fadeToHitSoundVolume(value: number, seconds = 0.2) {
     if (audioContext === null || hitSoundVolumeNode === null) return false;
     hitSoundVolumeNode.gain.linearRampToValueAtTime(value, audioContext.currentTime + seconds);
     return true;

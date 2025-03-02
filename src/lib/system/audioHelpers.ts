@@ -2,6 +2,7 @@ import type { MusicData } from "$lib/system/types";
 import { audioContext, loadMusicSource, unloadMusicSource } from "./audioContext";
 import { global } from "$lib/system/global.svelte";
 
+// Temporary BGM list
 const BACKGROUND_MUSIC_LIST: MusicData[] = [
     {
         name: "triangles",
