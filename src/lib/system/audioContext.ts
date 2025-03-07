@@ -16,7 +16,7 @@ export let musicSource: AudioBufferSourceNode | null = null;
 
 
 
-/** Initialize audio context and effect nodes */
+/** Try to initialize audio context and effect nodes, does nothing if already initialized */
 export function initializeAudioContext() {
     // Fail if already initialized
     if (audioContext !== null) return false;
@@ -46,24 +46,24 @@ export function initializeAudioContext() {
 /** Fade to a music volume over a set time */
 export function fadeToMusicVolume(value: number, seconds = 0.2) {
     if (audioContext === null || musicVolumeNode === null) return false;
-    musicVolumeNode.gain.linearRampToValueAtTime(value, audioContext.currentTime + seconds);
+    musicVolumeNode.gain.linearRampToValueAtTime(value, audioContext.currentTime + Math.max(0, seconds));
     return true;
 } 
 /** Fade to a sound effects volume over a set time */
 export function fadeToSoundEffectsVolume(value: number, seconds = 0.2) {
     if (audioContext === null || soundEffectsVolumeNode === null) return false;
-    soundEffectsVolumeNode.gain.linearRampToValueAtTime(value, audioContext.currentTime + seconds);
+    soundEffectsVolumeNode.gain.linearRampToValueAtTime(value, audioContext.currentTime + Math.max(0, seconds));
     return true;
 } 
 /** Fade to a hit sound volume over a set time */
 export function fadeToHitSoundVolume(value: number, seconds = 0.2) {
     if (audioContext === null || hitSoundVolumeNode === null) return false;
-    hitSoundVolumeNode.gain.linearRampToValueAtTime(value, audioContext.currentTime + seconds);
+    hitSoundVolumeNode.gain.linearRampToValueAtTime(value, audioContext.currentTime + Math.max(0, seconds));
     return true;
 }
 
 /** Create new music volume node and music source node from an audio buffer, start playing if requested, fade in music volume from 0 to set volume if seconds >= 0 */
-export async function loadMusicSource(audioBuffer: AudioBuffer, play = false, seconds = -1) {
+export function loadMusicSource(audioBuffer: AudioBuffer, play = false, fadeInSeconds = -1) {
     if (audioContext === null || analyserNode === null) return false;
 
     // Fail if there currently exists a music volume node or music source node
@@ -71,7 +71,7 @@ export async function loadMusicSource(audioBuffer: AudioBuffer, play = false, se
 
     // Create nodes and connect to audio graph
     musicVolumeNode = new GainNode(audioContext, {
-        gain: seconds >= 0 ? 0 : global.userSettings.musicVolume // set volume at 0 if time is set, or set straight to setting value
+        gain: fadeInSeconds >= 0 ? 0 : global.userSettings.musicVolume // set volume at 0 if time is set, or set straight to setting value
     });
     musicSource = new AudioBufferSourceNode(audioContext, {
         buffer: audioBuffer
@@ -84,13 +84,13 @@ export async function loadMusicSource(audioBuffer: AudioBuffer, play = false, se
     }
 
     // Fade in music volume if time is set
-    if (seconds >= 0) {
-        musicVolumeNode.gain.linearRampToValueAtTime(global.userSettings.musicVolume, audioContext.currentTime + seconds);
+    if (fadeInSeconds >= 0) {
+        musicVolumeNode.gain.linearRampToValueAtTime(global.userSettings.musicVolume, audioContext.currentTime + fadeInSeconds);
     }
 }
 
 /** Invalidate current music volume node and music source node, fade out music volume to 0 if seconds >= 0, then disconnect both of them */
-export async function unloadMusicSource(seconds = -1) {
+export function unloadMusicSource(fadeOutSeconds = -1) {
     if (audioContext === null || musicVolumeNode === null || musicSource === null) return false;
 
     // Dereference nodes
@@ -99,17 +99,17 @@ export async function unloadMusicSource(seconds = -1) {
     const outMusicSource = musicSource;
     musicSource = null;
 
-    if (seconds >= 0) {
+    if (fadeOutSeconds >= 0) {
         // Fade out music volume first if time is set, then unload
-        outMusicVolumeNode.gain.linearRampToValueAtTime(0, audioContext.currentTime + seconds);
-        // outMusicSource.stop(audioContext.currentTime + seconds); // NOTE: unwantedly fires ended event
+        outMusicVolumeNode.gain.linearRampToValueAtTime(0, audioContext.currentTime + fadeOutSeconds);
+        outMusicSource.stop(audioContext.currentTime + fadeOutSeconds); // NOTE: unwantedly fires ended event
         setTimeout(() => {
             outMusicSource.disconnect();
             outMusicVolumeNode.disconnect();
-        }, seconds * 1000);
+        }, fadeOutSeconds * 1000);
     } else {
         // Unload right away
-        // outMusicSource.stop(); // NOTE: unwantedly fires ended event
+        outMusicSource.stop(); // NOTE: unwantedly fires ended event
         outMusicSource.disconnect();
         outMusicVolumeNode.disconnect();
     }

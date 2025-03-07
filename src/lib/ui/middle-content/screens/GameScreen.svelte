@@ -1,10 +1,11 @@
 <script lang="ts">
-    import { onDestroy, onMount } from "svelte";
+    import { onMount, onDestroy } from "svelte";
     import { fade, fly } from "svelte/transition";
     import { circIn, circOut } from "svelte/easing";
     import Game from "$lib/game/Game.svelte";
-    import { setScreen } from "$lib/system/global.svelte";
+    import { global, setScreen } from "$lib/system/global.svelte";
     import { sleep } from "$lib/system/helpers";
+    import { loadNewMusicFromLink } from "$lib/system/audioHelpers";
 
     // Local states
     let isLoadingInfoShown = $state(false);
@@ -13,15 +14,17 @@
     let isPausedOverlayShown = $state(false);
 
     /** Event handler to pause/unpause the game */
-    function pauseKey(event: KeyboardEvent) {
+    function miscKeydownHandler(event: KeyboardEvent) {
         if (event.key === "Escape") {
             isPausedOverlayShown = !isPausedOverlayShown;
+        } else if ((event.key === "Tab" || event.ctrlKey === true || event.shiftKey === true || event.altKey === true) && isPausedOverlayShown === false) {
+            // event.preventDefault(); // DEBUG
         }
     }
 
-    /** Event handler to exit the game */
+    /** Handler to exit the game (TODO) */
     async function exit() {
-        isPausedOverlayShown = false; // TODO
+        isPausedOverlayShown = false;
         isMainGameAreaShown = false;
         await sleep(1000);
         setScreen("song-select", true);
@@ -29,27 +32,28 @@
 
     // When game screen loads
     onMount(async () => {
-        // [Instantly] fade in loading info and load resources
+        // Fade in loading info and load resources, wait finish && [1500]-2000ms: loading info animation attack + sustain
         isLoadingInfoShown = true;
-        // TODO: load resources
+        const song = { name: "最後的灰燼", author: "Ds_Squid", mapper: "fengziya", audioLink: "https://rhythora.us-lax-1.linodeobjects.com/最後的灰燼.mp3", length: 114, bpm: 120, offset: 0 }; // TODO: temporary
+        global.musicPlayerData.song = song;
+        global.musicPlayerData.isPlaying = true;
+        await Promise.all([loadNewMusicFromLink(song.audioLink, false, 1.5, -1), sleep(1500)]);
         
-        // [+[1500]-2000ms: loading info attack + sustain && loaded] fade out loading info and load game
-        await sleep(1500); // TODO: use promise.all
+        // Fade out loading info and prepare game area, wait [500]-1000ms: loading info animation release
         isLoadingInfoShown = false;
         // TODO: fade in song cover/background
-        gameElement.prepare();
-        window.addEventListener("keydown", pauseKey);
+        window.addEventListener("keydown", miscKeydownHandler);
+        await sleep(500);
         
-        // [+[500]-1000ms: loading info release] fade in main game area
-        await sleep(500); 
+        // Fade in main game area, wait [500]-1000ms: main game area attack
         isMainGameAreaShown = true;
+        await sleep(500);
         
-        // [+500-[1000]ms: main game area attack] start game
-        await sleep(1000);
-        // TODO: record time and start game
+        // Start game
+        gameElement.start();
     });
     onDestroy(() => {
-        window.removeEventListener("keydown", pauseKey);
+        window.removeEventListener("keydown", miscKeydownHandler);
     });
 </script>
 
@@ -64,13 +68,13 @@
 </div>
 
 <!-- Main game area -->
-<div class="absolute top-0 left-0 w-full h-full {isMainGameAreaShown === true ? "opcaity-100" : "opacity-0" } transition duration-1000 ease-circ-out">
+<div class="absolute inset-0 w-full h-full {isMainGameAreaShown === true ? "opacity-100" : "opacity-0" } transition duration-1000 ease-circ-out">
     <Game bind:this={gameElement} />
 </div>
 
 <!-- Paused overlay -->
 {#if isPausedOverlayShown === true}
-<div transition:fade={{ duration: 300, easing: circOut }} class="absolute top-0 left-0 w-full h-full bg-black/70 flex items-center justify-center">
+<div transition:fade={{ duration: 300, easing: circOut }} class="absolute inset-0 w-full h-full bg-black/70 flex items-center justify-center">
     <!-- Pause menu -->
     <div class="flex flex-col flex-nowrap gap-4">
         <!-- Pause text -->
@@ -78,17 +82,17 @@
 
         <!-- Pause buttons -->
         <div transition:fly={{ y: 50, duration: 300, easing: circOut }} class="flex flex-row flex-nowrap gap-0">
-            <button onclick={exit} title="Exit" aria-label="Exit" class="group w-20 h-20 rounded-full active:translate-y-0.5 transition duration-100 ease-circ-out flex items-center justify-center">
+            <button onclick={exit} title="Exit" aria-label="Exit" class="group w-20 h-20 rounded-full active:translate-y-1 transition duration-100 ease-circ-out flex items-center justify-center">
                 <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="1.5" stroke="currentColor" class="size-8 stroke-zinc-400 group-hover:stroke-zinc-100 transition-colors duration-100 ease-circ-out">
                     <path stroke-linecap="round" stroke-linejoin="round" d="M6 18 18 6M6 6l12 12" />
                 </svg>
             </button>
-            <button title="Restart" aria-label="Restart" class="group w-20 h-20 rounded-full active:translate-y-0.5 transition duration-100 ease-circ-out flex items-center justify-center">
+            <button title="Restart" aria-label="Restart" class="group w-20 h-20 rounded-full active:translate-y-1 transition duration-100 ease-circ-out flex items-center justify-center">
                 <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="1.5" stroke="currentColor" class="size-8 stroke-zinc-400 group-hover:stroke-zinc-100 transition-colors duration-100 ease-circ-out">
                     <path stroke-linecap="round" stroke-linejoin="round" d="M16.023 9.348h4.992v-.001M2.985 19.644v-4.992m0 0h4.992m-4.993 0 3.181 3.183a8.25 8.25 0 0 0 13.803-3.7M4.031 9.865a8.25 8.25 0 0 1 13.803-3.7l3.181 3.182m0-4.991v4.99" />
                 </svg>
             </button>
-            <button onclick={() => { isPausedOverlayShown = false }} title="Resume" aria-label="Resume" class="group w-20 h-20 rounded-full active:translate-y-0.5 transition duration-100 ease-circ-out flex items-center justify-center">
+            <button onclick={() => { isPausedOverlayShown = false }} title="Resume" aria-label="Resume" class="group w-20 h-20 rounded-full active:translate-y-1 transition duration-100 ease-circ-out flex items-center justify-center">
                 <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="1.5" stroke="currentColor" class="size-8 stroke-zinc-400 group-hover:stroke-zinc-100 transition-colors duration-100 ease-circ-out">
                     <path stroke-linecap="round" stroke-linejoin="round" d="m8.25 4.5 7.5 7.5-7.5 7.5" />
                 </svg>

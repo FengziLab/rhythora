@@ -3,6 +3,7 @@ import type { Global, Screen } from "./types";
 /* Global states */
 export const global: Global = $state({
     screen: "home",
+    screenAnimationReverseDirection: false,
     userSettings: {
         latency: 0,
         musicVolume: 1,
@@ -13,14 +14,15 @@ export const global: Global = $state({
         song: {
             name: "???",
             author: "???",
-            link: "",
+            mapper: "???",
+            audioLink: "",
+            length: -1,
             bpm: -1,
             offset: 0
         },
         isPlaying: false
     },
-    waitingCount: 0,
-    screenAnimationReverseDirection: false
+    waitingCount: 0
 });
 
 /* Global state setters */

@@ -5,6 +5,6 @@
 </script>
 
 <!-- Editor screen -->
-<div in:fade={{ duration: 300, delay: 100, easing: circOut }} out:fade={{ duration: 300, delay: 0, easing: circOut }} class="absolute top-0 left-0 w-full h-full">
+<div in:fade={{ duration: 300, delay: 150, easing: circOut }} out:fade={{ duration: 300, delay: 0, easing: circOut }} class="absolute inset-0 w-full h-full">
     <Editor />
 </div>

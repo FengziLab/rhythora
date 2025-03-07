@@ -11,7 +11,12 @@ export interface UserSettings {
 export interface MusicData {
     name: string,
     author: string,
-    link: string,
+    mapper: string,
+    audioLink: string,
+    previewAudioLink?: string,
+    thumbnailLink?: string,
+    thumbnailBlurhash?: string,
+    length: number,
     bpm: number,
     offset: number
 }
@@ -22,15 +27,15 @@ export interface MusicPlayerData {
 
 export interface Global {
     screen: Screen,
+    screenAnimationReverseDirection: boolean,
     userSettings: UserSettings,
     musicPlayerData: MusicPlayerData,
-    waitingCount: number,
-    screenAnimationReverseDirection: boolean
+    waitingCount: number
 }
 
 
 
-/* Beatmap */
+/* Chart */
 export type NoteType = "tap" | "hold" | "stay";
 
 export interface PointPosition {
@@ -56,4 +61,9 @@ export type Note = {
     type: "stay",
     time: number,
     position: PointPosition
+}
+
+export interface Chart {
+    metadata: MusicData,
+    notes: Note[]
 }

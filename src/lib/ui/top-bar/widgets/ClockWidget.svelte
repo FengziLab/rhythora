@@ -1,6 +1,9 @@
 <script lang="ts">
+    import { onMount, onDestroy } from "svelte";
+
     // Local states
     let timeText = $state("");
+    let updateIntervalID: number;
 
     /** Update the displayed time in timer */
     function updateTime() {
@@ -12,8 +15,13 @@
     }
 
     // Call update
-    updateTime();
-    setInterval(updateTime, 1000);
+    onMount(() => {
+        updateTime();
+        updateIntervalID = setInterval(updateTime, 1000);
+    });
+    onDestroy(() => {
+        clearInterval(updateIntervalID);
+    })
 </script>
 
 <!-- Clock widget -->
