@@ -1,8 +1,11 @@
 <script lang="ts">
-    import { audioContext, musicSource } from "$lib/system/audioContext";
     import { onMount, onDestroy } from "svelte";
-    import type { Note } from "$lib/system/types";
-    import { global } from "$lib/system/global.svelte";
+    import { audioContext, musicSource } from "$lib/system/audio-context";
+    import { global, setScreen } from "$lib/system/global.svelte";
+    import type { Note, GameNote } from "$lib/system/types";
+    import { sleep } from "$lib/system/helpers";
+    import { fade, fly } from "svelte/transition";
+    import { circOut } from "svelte/easing";
 
     // Canvas and local states
     let canvasElement: HTMLCanvasElement;
@@ -10,28 +13,38 @@
     let canvasWidth = $state(300);
     let canvasHeight = $state(150);
     let dpr = $state(1);
-    let noteDimensionUnit = $derived(Math.floor(Math.min(canvasWidth / 10, canvasHeight / 6)));
-    let noteRadius = $derived(noteDimensionUnit / 2);
-    let canvasXOffset = $derived((canvasWidth - (noteDimensionUnit * 10)) / 2);
-    let canvasYOffset = $derived((canvasHeight - (noteDimensionUnit * 6)) / 2);
+    let noteDiameter = $derived(Math.floor(Math.min(canvasWidth / 10, canvasHeight / 6)));
+    let noteRadius = $derived(noteDiameter / 2);
+    let canvasXOffset = $derived((canvasWidth - (noteDiameter * 10)) / 2);
+    let canvasYOffset = $derived((canvasHeight - (noteDiameter * 6)) / 2);
+    let isPausedOverlayShown = $state(false);
 
     let logicalStartTime = -1;
     const NOTE_BEFORE_SECONDS = 1;
-    const NOTE_AFTER_SECONDS = 0.2;
-    const NOTE_FADE_SECONDS = 0.2;
+    const NOTE_AFTER_SECONDS = 0.3;
+    const NOTE_FADE_SECONDS = 0.3;
     const NOTE_APPROACH_SECONDS = 0.6;
-    let onScreenNotes: Note[] = [];
+    let onScreenNotes: GameNote[] = [];
     let onScreenNotesSeekIndex = 0;
     let currentCombo = $state(0);
     let comboText = $derived(currentCombo.toString());
     let accuracy = $state(1);
     let accuracyText = $derived(`${(accuracy * 100).toFixed(2)}%`);
 
+    let lastFPSUpdateTime = 0;
+    let framesRendered = 0;
+    let currentFPS = $state(0);
+
+
+
+    /* Visuals */
+
     // DEBUG: temporary
     const CHART: Note[] = [
         { type: "tap", time: 0, position: { row: 1, xPos: 0 } },
         { type: "tap", time: 1, position: { row: 1, xPos: 1 } },
         { type: "tap", time: 2, position: { row: 1, xPos: 2 } },
+        { type: "tap", time: 2, position: { row: 1, xPos: 3 } },
         { type: "tap", time: 2.5, position: { row: 2, xPos: 2.5 } },
         { type: "tap", time: 3, position: { row: 1, xPos: 3 } },
         { type: "tap", time: 3.5, position: { row: 2, xPos: 3.5 } },
@@ -44,7 +57,39 @@
         { type: "tap", time: 8.5, position: { row: 3, xPos: 8.5 } },
         { type: "tap", time: 8.75, position: { row: 2, xPos: 8.75 } },
         { type: "tap", time: 9, position: { row: 1, xPos: 9 } },
+        { type: "tap", time: 10, position: { row: 2, xPos: 0 } },
+        { type: "tap", time: 11, position: { row: 2, xPos: 1 } },
+        { type: "tap", time: 12, position: { row: 2, xPos: 2 } },
+        { type: "tap", time: 12.5, position: { row: 3, xPos: 2.5 } },
+        { type: "tap", time: 13, position: { row: 2, xPos: 3 } },
+        { type: "tap", time: 13.5, position: { row: 3, xPos: 3.5 } },
+        { type: "tap", time: 14, position: { row: 2, xPos: 4 } },
+        { type: "tap", time: 15, position: { row: 2, xPos: 5 } },
+        { type: "tap", time: 16, position: { row: 2, xPos: 6 } },
+        { type: "tap", time: 17, position: { row: 2, xPos: 7 } },
+        { type: "tap", time: 18, position: { row: 2, xPos: 8 } },
+        { type: "tap", time: 18.25, position: { row: 3, xPos: 8.25 } },
+        { type: "tap", time: 18.75, position: { row: 3, xPos: 8.75 } },
+        { type: "tap", time: 19, position: { row: 2, xPos: 9 } },
     ];
+
+
+    // Generate game chart and mark sync notes
+    const chart: GameNote[] = CHART.map(note => {
+        return {
+            ...note,
+            isSyncNote: false,
+            hitAt: -1,
+            hitAccuracyRating: "standby"
+        }
+    });
+    for (let i = 1; i < chart.length; i++) {
+        if (chart[i].time === chart[i - 1].time) {
+            chart[i].isSyncNote = true;
+            chart[i - 1].isSyncNote = true;
+        }
+    }
+
 
     /** Render next frame or start rendering sequence */
     function render() {
@@ -55,7 +100,7 @@
         const gameTime = audioContext!.currentTime - logicalStartTime; // NOTE: guaranteed audioContext so make ts happy
         canvasCtx.fillStyle = "#d4d4d8"; // zinc-300
         canvasCtx.globalAlpha = 1;
-        canvasCtx.fillRect(0, canvasHeight - 5, gameTime / global.musicPlayerData.song.length * canvasWidth, 5);
+        canvasCtx.fillRect(0, canvasHeight - 6, gameTime / global.musicPlayerData.song.length * canvasWidth, 6);
 
         // Clear long unhit notes
         let removeCount = 0;
@@ -67,9 +112,9 @@
         onScreenNotes.splice(0, removeCount);
 
         // Seek and add new notes
-        for (let i = onScreenNotesSeekIndex; i < CHART.length; i++) {
-            if (CHART[i].time - NOTE_BEFORE_SECONDS <= gameTime) {
-                onScreenNotes.push(CHART[i] as Note);
+        for (let i = onScreenNotesSeekIndex; i < chart.length; i++) {
+            if (chart[i].time - NOTE_BEFORE_SECONDS <= gameTime) {
+                onScreenNotes.push(chart[i] as GameNote);
                 onScreenNotesSeekIndex++;
             }
         }
@@ -78,100 +123,146 @@
         for (let i = onScreenNotes.length - 1; i >= 0; i--) {
             const note = onScreenNotes[i]; // temp: ts
             if (note.type === "tap") {
+                const centerX = note.position.xPos * noteDiameter + noteRadius + canvasXOffset;
+                const centerY = note.position.row * noteDiameter + noteRadius + canvasYOffset;
+
                 // Circle
                 canvasCtx.fillStyle = "#7823c2";
                 canvasCtx.globalAlpha = Math.min(Math.min(gameTime - (note.time - NOTE_BEFORE_SECONDS), (note.time + NOTE_AFTER_SECONDS) - gameTime) / NOTE_FADE_SECONDS, 1);
                 canvasCtx.beginPath();
-                canvasCtx.arc(note.position.xPos * noteDimensionUnit + noteRadius + canvasXOffset, note.position.row * noteDimensionUnit + noteRadius + canvasYOffset, noteRadius, 0, 2 * Math.PI);
+                canvasCtx.arc(centerX, centerY, noteRadius, 0, 2 * Math.PI);
                 canvasCtx.fill();
 
                 // Circle border
-                canvasCtx.lineWidth = Math.floor(noteRadius / 12);
-                canvasCtx.strokeStyle = "#a44eed";
+                canvasCtx.lineWidth = Math.floor(noteRadius / 10);
+                canvasCtx.strokeStyle = note.isSyncNote === true ? "#ed4e93" : "#a44eed";
                 canvasCtx.stroke();
 
                 // Approach circle
-                const approachLeftPercentage = (note.time - gameTime) / NOTE_APPROACH_SECONDS;
-                if (approachLeftPercentage <= 1) {
+                const approachRemainingPercentage = (note.time - gameTime) / NOTE_APPROACH_SECONDS;
+                if (approachRemainingPercentage <= 1) {
                     canvasCtx.strokeStyle = "#d4d4d8";
-                    canvasCtx.globalAlpha = 1 - approachLeftPercentage;
+                    canvasCtx.globalAlpha = 1 - approachRemainingPercentage;
                     canvasCtx.beginPath();
-                    canvasCtx.arc(note.position.xPos * noteDimensionUnit + noteRadius + canvasXOffset, note.position.row * noteDimensionUnit + noteRadius + canvasYOffset, Math.max(noteRadius, approachLeftPercentage * noteDimensionUnit + noteRadius), 0, 2 * Math.PI);
+                    canvasCtx.arc(centerX, centerY, Math.max(noteRadius, approachRemainingPercentage * noteDiameter + noteRadius), 0, 2 * Math.PI);
                     canvasCtx.stroke();
                 }
             }
         }
 
-        requestAnimationFrame(render);
+        // FPS Counter
+        if (global.userSettings.fpsCounter === true) {
+            if (gameTime - lastFPSUpdateTime > 0.5) {
+                currentFPS = Math.round(framesRendered / (gameTime - lastFPSUpdateTime));
+                console.log(currentFPS);
+                lastFPSUpdateTime = gameTime;
+                framesRendered = 0;
+            } else {
+                framesRendered++;
+            }
+        }
+
+        // Render next frame
+        if (isPausedOverlayShown === false) requestAnimationFrame(render);
     }
+
+
+
+    /* Input */
 
     /** Handle game input (TODO) */
     function gameInput(row: number) {
         for (let i = 0; i < onScreenNotes.length; i++) {
             if (onScreenNotes[i].position.row === row) {
                 currentCombo++;
-                onScreenNotes.splice(i, 1);
+                onScreenNotes[i].hitAt = audioContext!.currentTime;
+                // TODO: hit accuracy rating
                 break;
             }
         }
     }
 
-    /** Event handler for keyboard game input */
-    function gameKeydownHandler(event: KeyboardEvent) {
-        if (event.repeat === true) return;
-        switch (event.code) {
-            case "KeyQ":
-            case "KeyW":
-            case "KeyE":
-            case "KeyR":
-            case "KeyT":
-            case "KeyY":
-            case "KeyU":
-            case "KeyI":
-            case "KeyO":
-            case "KeyP":
-            case "BracketLeft":
-            case "BracketRight":
-                gameInput(1);
-                break;
+    /** Handle exiting the game */
+    async function exit() {
+        isPausedOverlayShown = false;
+        global.gameScreenStatus = "before-game";
+        await sleep(1000);
+        setScreen("song-select", true);
+    }
 
-            case "KeyA":
-            case "KeyS":
-            case "KeyD":
-            case "KeyF":
-            case "KeyG":
-            case "KeyH":
-            case "KeyJ":
-            case "KeyK":
-            case "KeyL":
-            case "Semicolon":
-            case "Quote":
-                gameInput(2);
-                break;
+    /** Handle restarting the game (TODO) */
+    function restart() {
+        // :)
+    }
 
-            case "KeyZ":
-            case "KeyX":
-            case "KeyC":
-            case "KeyV":
-            case "KeyB":
-            case "KeyN":
-            case "KeyM":
-            case "Comma":
-            case "Period":
-            case "Slash":
-                gameInput(3);
-                break;
+    /** Handle toggling pause (TODO) */
+    function togglePause() {
+        if (isPausedOverlayShown === false) {
+            isPausedOverlayShown = true;
+        } else {
+            isPausedOverlayShown = false;
+            requestAnimationFrame(render);
         }
     }
 
-    /** Start the game */
-    export function start() {
-        if (audioContext === null || musicSource === null) return false;
-        const startTime = audioContext.currentTime + 0.5;
-        musicSource.start(startTime);
-        logicalStartTime = startTime // + offset + audioContext.baseLatency + audioContext.outputLatency
-        render();
+    /** Event handler for keyboard game input */
+    function keydownHandler(event: KeyboardEvent) {
+        // Game keys
+        if (event.repeat === false) {
+            switch (event.code) {
+                case "KeyQ":
+                case "KeyW":
+                case "KeyE":
+                case "KeyR":
+                case "KeyT":
+                case "KeyY":
+                case "KeyU":
+                case "KeyI":
+                case "KeyO":
+                case "KeyP":
+                case "BracketLeft":
+                case "BracketRight":
+                    gameInput(1);
+                    return;
+                case "KeyA":
+                case "KeyS":
+                case "KeyD":
+                case "KeyF":
+                case "KeyG":
+                case "KeyH":
+                case "KeyJ":
+                case "KeyK":
+                case "KeyL":
+                case "Semicolon":
+                case "Quote":
+                    gameInput(2);
+                    return;
+                case "KeyZ":
+                case "KeyX":
+                case "KeyC":
+                case "KeyV":
+                case "KeyB":
+                case "KeyN":
+                case "KeyM":
+                case "Comma":
+                case "Period":
+                case "Slash":
+                    gameInput(3);
+                    return;
+            }
+        }
+
+        // Miscellaneous keys
+        if (event.key === "Escape") {
+            togglePause();
+        } else if ((event.key === "Tab" || event.ctrlKey === true || event.shiftKey === true || event.altKey === true) && isPausedOverlayShown === false) {
+            // event.preventDefault(); // DEBUG
+        }
     }
+
+
+
+    /* Loading */
 
     // When component loads
     onMount(() => {
@@ -180,11 +271,20 @@
         canvasCtx = ctx;
         dpr = window.devicePixelRatio;
         canvasCtx.scale(dpr, dpr);
-        window.addEventListener("keydown", gameKeydownHandler);
+        window.addEventListener("keydown", keydownHandler);
     });
     onDestroy(() => {
-        window.removeEventListener("keydown", gameKeydownHandler);
-    })
+        window.removeEventListener("keydown", keydownHandler);
+    });
+
+    /** Start the game */
+    export function start() {
+        if (audioContext === null || musicSource === null) return false;
+        const startTime = audioContext.currentTime + NOTE_BEFORE_SECONDS;
+        musicSource.start(startTime);
+        logicalStartTime = startTime // + offset + audioContext.baseLatency + audioContext.outputLatency
+        render();
+    }
 </script>
 
 <!-- Game canvas -->
@@ -198,6 +298,43 @@
 
 <!-- Accuracy display -->
 <div class="absolute right-12 bottom-12 flex flex-col flex-nowrap gap-2 items-end justify-end">
-    <span class="ml-0.5 text-zinc-300/90 text-lg font-comfortaa tracking-wide select-none">Accuracy</span>
+    <span class="ml-0.5 text-zinc-300 text-lg font-comfortaa tracking-wide select-none">Accuracy</span>
     <span class="text-zinc-300 text-5xl max-pc:text-4xl font-comfortaa font-light tracking-wide select-none">{accuracyText}</span>
 </div>
+
+<!-- FPS Counter -->
+{#if global.userSettings.fpsCounter === true}
+<div class="absolute right-4 top-4 max-w-60 px-3 pt-1 pb-2 rounded-xl bg-zinc-800/90">
+    <span class="text-zinc-100 text-xs font-mono">{currentFPS} fps</span>
+</div>
+{/if}
+
+<!-- Paused overlay -->
+{#if isPausedOverlayShown === true}
+<div transition:fade={{ duration: 300, easing: circOut }} class="absolute inset-0 w-full h-full bg-black/70 flex items-center justify-center">
+    <!-- Pause menu -->
+    <div class="flex flex-col flex-nowrap gap-4">
+        <!-- Pause text -->
+        <p class="text-center text-zinc-400 text-2xl font-comfortaa tracking-widest">- Paused -</p>
+
+        <!-- Pause buttons -->
+        <div transition:fly={{ y: 50, duration: 300, easing: circOut }} class="flex flex-row flex-nowrap gap-0">
+            <button onclick={exit} title="Exit" aria-label="Exit" class="group w-20 h-20 rounded-full active:translate-y-1 transition duration-100 ease-circ-out flex items-center justify-center">
+                <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="1.5" stroke="currentColor" class="size-8 stroke-zinc-400 group-hover:stroke-zinc-100 transition-colors duration-100 ease-circ-out">
+                    <path stroke-linecap="round" stroke-linejoin="round" d="M6 18 18 6M6 6l12 12" />
+                </svg>
+            </button>
+            <button onclick={restart} title="Restart" aria-label="Restart" class="group w-20 h-20 rounded-full active:translate-y-1 transition duration-100 ease-circ-out flex items-center justify-center">
+                <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="1.5" stroke="currentColor" class="size-8 stroke-zinc-400 group-hover:stroke-zinc-100 transition-colors duration-100 ease-circ-out">
+                    <path stroke-linecap="round" stroke-linejoin="round" d="M16.023 9.348h4.992v-.001M2.985 19.644v-4.992m0 0h4.992m-4.993 0 3.181 3.183a8.25 8.25 0 0 0 13.803-3.7M4.031 9.865a8.25 8.25 0 0 1 13.803-3.7l3.181 3.182m0-4.991v4.99" />
+                </svg>
+            </button>
+            <button onclick={togglePause} title="Resume" aria-label="Resume" class="group w-20 h-20 rounded-full active:translate-y-1 transition duration-100 ease-circ-out flex items-center justify-center">
+                <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="1.5" stroke="currentColor" class="size-8 stroke-zinc-400 group-hover:stroke-zinc-100 transition-colors duration-100 ease-circ-out">
+                    <path stroke-linecap="round" stroke-linejoin="round" d="m8.25 4.5 7.5 7.5-7.5 7.5" />
+                </svg>
+            </button>
+        </div>
+    </div>
+</div>
+{/if}

@@ -1,6 +1,44 @@
 import type { MusicData } from "$lib/system/types";
-import { audioContext, initializeAudioContext, loadMusicSource, musicSource, unloadMusicSource } from "./audioContext";
+import { audioContext, initializeAudioContext, loadMusicSource, musicSource, unloadMusicSource } from "./audio-context";
 import { global } from "$lib/system/global.svelte";
+
+let latestLoadTime = -1;
+
+/** Fade out current music, load audio link, then play the new one */
+export async function loadNewMusicFromLink(link: string, play = false, fadeOutSeconds = -1, fadeInSeconds = -1) {
+    // Check and initialize the audio context in case it's not initialized
+    initializeAudioContext();
+    if (audioContext!.state === "suspended") await audioContext!.resume(); // NOTE: guaranteed audioContext so make ts happy
+
+    // ID the load to later check if we're the latest
+    const localLoadTime = audioContext!.currentTime // NOTE: guaranteed audioContext so make ts happy
+    latestLoadTime = localLoadTime;
+
+    // Fade out current music
+    unloadMusicSource(fadeOutSeconds);
+
+    // Load and decode audio
+    global.waitingCount++;
+    const response = await fetch(link);
+    const arrayBuffer = await response.arrayBuffer();
+    const audioBuffer = await audioContext!.decodeAudioData(arrayBuffer); // NOTE: guaranteed audioContext so make ts happy
+    global.waitingCount--;
+
+    // Ensure not overriding those started later but loaded faster
+    if (localLoadTime === latestLoadTime) {
+        // If we are the latest then check and ensure we unload current music again in case one is playing
+        unloadMusicSource(fadeOutSeconds);
+
+        // Play the new one
+        loadMusicSource(audioBuffer, play, fadeInSeconds);
+    } else { // DEBUG
+        if (musicSource !== null) {
+            console.info("[DEBUG] Music Load ID check: prevented!");
+        } else {
+            console.info("[DEBUG] Music Load ID check: actually prevented disaster!");
+        }
+    }
+}
 
 // Temporary BGM list
 const BACKGROUND_MUSIC_LIST: MusicData[] = [
@@ -50,44 +88,6 @@ const BACKGROUND_MUSIC_LIST: MusicData[] = [
         audioLink: "https://rhythora.us-lax-1.linodeobjects.com/moonbath (remix).mp3"
     }
 ];
-
-let latestLoadTime = -1;
-
-/** Fade out current music, load audio link, then play the new one */
-export async function loadNewMusicFromLink(link: string, play = false, fadeOutSeconds = -1, fadeInSeconds = -1) {
-    // Check and initialize the audio context in case it's not initialized
-    initializeAudioContext();
-    if (audioContext!.state === "suspended") await audioContext!.resume(); // NOTE: guaranteed audioContext so make ts happy
-
-    // ID the load to later check if we're the latest
-    const localLoadTime = audioContext!.currentTime // NOTE: guaranteed audioContext so make ts happy
-    latestLoadTime = localLoadTime;
-
-    // Fade out current music
-    unloadMusicSource(fadeOutSeconds);
-
-    // Load and decode audio
-    global.waitingCount++;
-    const response = await fetch(link);
-    const arrayBuffer = await response.arrayBuffer();
-    const audioBuffer = await audioContext!.decodeAudioData(arrayBuffer); // NOTE: guaranteed audioContext so make ts happy
-    global.waitingCount--;
-
-    // Ensure not overriding those started later but loaded faster
-    if (localLoadTime === latestLoadTime) {
-        // If we are the latest then check and ensure we unload current music again in case one is playing
-        unloadMusicSource(fadeOutSeconds);
-
-        // Play the new one
-        loadMusicSource(audioBuffer, play, fadeInSeconds);
-    } else { // DEBUG
-        if (musicSource !== null) {
-            console.info("[DEBUG] Music Load ID check: prevented!");
-        } else {
-            console.info("[DEBUG] Music Load ID check: actually prevented disaster!");
-        }
-    }
-}
 
 /** Switch to random new background music */
 export async function playRandomBackgroundMusic(fadeSeconds = -1) {

@@ -1,7 +1,7 @@
 <script lang="ts">
     import { onMount, onDestroy } from "svelte";
-    import { audioContext, musicVolumeNode, fadeToMusicVolume } from "$lib/system/audioContext";
-    import { playRandomBackgroundMusic } from "$lib/system/audioHelpers";
+    import { audioContext, musicVolumeNode, fadeToMusicVolume } from "$lib/system/audio-context";
+    import { playRandomBackgroundMusic } from "$lib/system/audio-helpers";
 
     // Local states
     let displayText = $state("Debug");

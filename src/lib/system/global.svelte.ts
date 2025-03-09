@@ -4,11 +4,14 @@ import type { Global, Screen } from "./types";
 export const global: Global = $state({
     screen: "home",
     screenAnimationReverseDirection: false,
+    gameScreenStatus: "inactive",
     userSettings: {
-        latency: 0,
         musicVolume: 1,
         soundEffectsVolume: 1,
-        hitSoundVolume: 1
+        hitSoundVolume: 1,
+        latency: 0,
+        audoFullscreen: "off",
+        fpsCounter: false
     },
     musicPlayerData: {
         song: {
@@ -16,6 +19,9 @@ export const global: Global = $state({
             author: "???",
             mapper: "???",
             audioLink: "",
+            previewAudioLink: "",
+            thumbnailLink: "",
+            thumbnailBlurhash: "",
             length: -1,
             bpm: -1,
             offset: 0
@@ -29,4 +35,7 @@ export const global: Global = $state({
 export function setScreen(newScreen: Screen, reverseDirection = false) {
     global.screen = newScreen;
     global.screenAnimationReverseDirection = reverseDirection;
+    if (newScreen !== "game") {
+        global.gameScreenStatus = "inactive";
+    }
 }

@@ -1,12 +1,12 @@
 <script lang="ts">
     import { onMount } from "svelte";
-    import FlashEffect from "$lib/ui/FlashEffect.svelte";
+    import FlashEffect from "$lib/ui/misc/FlashEffect.svelte";
     import TopBar from "$lib/ui/top-bar/TopBar.svelte";
     import MiddleContent from "$lib/ui/middle-content/MiddleContent.svelte";
     import BottomBar from "$lib/ui/bottom-bar/BottomBar.svelte";
-    import DebugPanel from "$lib/ui/DebugPanel.svelte";
-    import { audioContext, initializeAudioContext } from "$lib/system/audioContext";
-    import { playRandomBackgroundMusic } from "$lib/system/audioHelpers";
+    import DebugPanel from "$lib/ui/misc/DebugPanel.svelte";
+    import { audioContext, initializeAudioContext } from "$lib/system/audio-context";
+    import { playRandomBackgroundMusic } from "$lib/system/audio-helpers";
     import { global } from "$lib/system/global.svelte";
 
     // Local states

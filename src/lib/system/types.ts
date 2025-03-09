@@ -1,13 +1,3 @@
-/* Game */
-export type Screen = "home" | "song-select" | "game" | "editor";
-
-export interface UserSettings {
-    latency: number,
-    musicVolume: number,
-    soundEffectsVolume: number,
-    hitSoundVolume: number
-}
-
 export interface MusicData {
     name: string,
     author: string,
@@ -20,28 +10,19 @@ export interface MusicData {
     bpm: number,
     offset: number
 }
+
 export interface MusicPlayerData {
     song: MusicData,
     isPlaying: boolean
 }
 
-export interface Global {
-    screen: Screen,
-    screenAnimationReverseDirection: boolean,
-    userSettings: UserSettings,
-    musicPlayerData: MusicPlayerData,
-    waitingCount: number
-}
-
-
-
-/* Chart */
 export type NoteType = "tap" | "hold" | "stay";
 
 export interface PointPosition {
     row: 1 | 2 | 3,
     xPos: number
 }
+
 export interface LongPosition {
     row: 1 | 2 | 3,
     startXPos: number,
@@ -63,7 +44,43 @@ export type Note = {
     position: PointPosition
 }
 
+export type HitAccuracyRating = "standby" | "perfect" | "early" | "late" | "miss";
+
+type GameNoteExtension = {
+    isSyncNote: boolean,
+    hitAt: number,
+    hitAccuracyRating: HitAccuracyRating
+}
+
+export type GameNote = Note & GameNoteExtension;
+
 export interface Chart {
     metadata: MusicData,
     notes: Note[]
+}
+
+
+
+export type Screen = "home" | "song-select" | "game" | "editor";
+
+export type GameScreenStatus = "inactive" | "loading" | "before-game" | "in-game" | "ending";
+
+export type AutoFullscreenSetting = "off" | "on-intro" | "on-game" | "both";
+
+export interface UserSettings {
+    musicVolume: number,
+    soundEffectsVolume: number,
+    hitSoundVolume: number,
+    latency: number,
+    audoFullscreen: AutoFullscreenSetting,
+    fpsCounter: boolean
+}
+
+export interface Global {
+    screen: Screen,
+    screenAnimationReverseDirection: boolean,
+    gameScreenStatus: GameScreenStatus,
+    userSettings: UserSettings,
+    musicPlayerData: MusicPlayerData,
+    waitingCount: number
 }
