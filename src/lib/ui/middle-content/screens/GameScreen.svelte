@@ -34,11 +34,11 @@
 </script>
 
 <!-- Game miscellaneous UI -->
-<div class="row-start-1 col-start-1 w-full h-full flex flex-col flex-nowrap gap-6 items-center justify-center">
+<div class="absolute inset-0 w-full h-full flex flex-col flex-nowrap gap-6 items-center justify-center">
     {#if global.gameScreenStatus === "loading"}
     <!-- Loading info -->
-    <div in:fly={{ y: 50, duration: 500, easing: circOut }} out:fly={{ y: 50, duration: 500, easing: circIn }}>
-        <span class="text-zinc-100 text-lg font-poppins tracking-wide">you're in game mode</span>
+    <div in:fly={{ duration: 500, easing: circOut, y: 50 }} out:fly={{ duration: 500, easing: circIn, y: 50 }}>
+        <span class="text-zinc-50 text-lg font-poppins tracking-wide">you're in game mode</span>
     </div>
     {/if}
 </div>

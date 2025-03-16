@@ -1,6 +1,6 @@
-import type { MusicData } from "$lib/system/types";
-import { audioContext, initializeAudioContext, loadMusicSource, musicSource, unloadMusicSource } from "./audio-context";
+import { audioContext, musicSource, initializeAudioContext, loadMusicSource, unloadMusicSource } from "./audio-system";
 import { global } from "$lib/system/global.svelte";
+import type { MusicData } from "$lib/system/types";
 
 let latestLoadTime = -1;
 

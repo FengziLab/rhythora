@@ -9,7 +9,7 @@ export let audioContext: AudioContext | null = null;
 export let analyserNode: AnalyserNode | null = null; // only for music
 export let musicVolumeNode: GainNode | null = null; // special: comes with each audio source
 export let soundEffectsVolumeNode: GainNode | null = null;
-export let hitSoundVolumeNode: GainNode | null = null;
+export let hitsoundsVolumeNode: GainNode | null = null;
 
 // Sources
 export let musicSource: AudioBufferSourceNode | null = null;
@@ -31,14 +31,14 @@ export function initializeAudioContext() {
     soundEffectsVolumeNode = new GainNode(audioContext, {
         gain: global.userSettings.soundEffectsVolume
     });
-    hitSoundVolumeNode = new GainNode(audioContext, {
-        gain: global.userSettings.hitSoundVolume
+    hitsoundsVolumeNode = new GainNode(audioContext, {
+        gain: global.userSettings.hitsoundsVolume
     });
 
     // Connect effect nodes other than music volume
     analyserNode.connect(audioContext.destination);
     soundEffectsVolumeNode.connect(audioContext.destination);
-    hitSoundVolumeNode.connect(audioContext.destination);
+    hitsoundsVolumeNode.connect(audioContext.destination);
 
     return true;
 }
@@ -56,9 +56,9 @@ export function fadeToSoundEffectsVolume(value: number, seconds = 0.2) {
     return true;
 } 
 /** Fade to a hit sound volume over a set time */
-export function fadeToHitSoundVolume(value: number, seconds = 0.2) {
-    if (audioContext === null || hitSoundVolumeNode === null) return false;
-    hitSoundVolumeNode.gain.linearRampToValueAtTime(value, audioContext.currentTime + Math.max(0, seconds));
+export function fadeToHitsoundsVolume(value: number, seconds = 0.2) {
+    if (audioContext === null || hitsoundsVolumeNode === null) return false;
+    hitsoundsVolumeNode.gain.linearRampToValueAtTime(value, audioContext.currentTime + Math.max(0, seconds));
     return true;
 }
 

@@ -1,18 +1,17 @@
 <script lang="ts">
     import { onMount, onDestroy } from "svelte";
-    import { audioContext, musicSource } from "$lib/system/audio-context";
-    import { global, setScreen } from "$lib/system/global.svelte";
-    import type { Note, GameNote } from "$lib/system/types";
-    import { sleep } from "$lib/system/helpers";
     import { fade, fly } from "svelte/transition";
     import { circOut } from "svelte/easing";
+    import { audioContext, musicSource } from "$lib/system/audio-system";
+    import { global, setScreen } from "$lib/system/global.svelte";
+    import { sleep } from "$lib/system/helpers";
+    import type { Note, GameNote } from "$lib/system/types";
 
     // Canvas and local states
     let canvasElement: HTMLCanvasElement;
     let canvasCtx: CanvasRenderingContext2D;
     let canvasWidth = $state(300);
     let canvasHeight = $state(150);
-    let dpr = $state(1);
     let noteDiameter = $derived(Math.floor(Math.min(canvasWidth / 10, canvasHeight / 6)));
     let noteRadius = $derived(noteDiameter / 2);
     let canvasXOffset = $derived((canvasWidth - (noteDiameter * 10)) / 2);
@@ -37,8 +36,32 @@
 
 
 
-    /* Visuals */
+    /* ------------------------------ Loading ------------------------------ */
 
+    // When game area loads
+    onMount(() => {
+        // Prepare canvas context
+        const ctx = canvasElement.getContext("2d");
+        if (ctx === null) return; // TODO: can do notif
+        canvasCtx = ctx;
+
+        // Listen for keydown events
+        window.addEventListener("keydown", keydownHandler);
+    });
+    onDestroy(() => {
+        window.removeEventListener("keydown", keydownHandler);
+    });
+
+    /** Start the game after minimum appearing time */
+    export function start() {
+        if (audioContext === null || musicSource === null) return false;
+        const startTime = audioContext.currentTime + NOTE_BEFORE_SECONDS;
+        musicSource.start(startTime);
+        logicalStartTime = startTime; // + offset + audioContext.baseLatency + audioContext.outputLatency
+        render();
+    }
+
+    // Load chart
     // DEBUG: temporary
     const CHART: Note[] = [
         { type: "tap", time: 0, position: { row: 1, xPos: 0 } },
@@ -73,8 +96,7 @@
         { type: "tap", time: 19, position: { row: 2, xPos: 9 } },
     ];
 
-
-    // Generate game chart and mark sync notes
+    // Generate game chart from chart and mark sync notes
     const chart: GameNote[] = CHART.map(note => {
         return {
             ...note,
@@ -91,6 +113,9 @@
     }
 
 
+
+    /* ------------------------------ Visuals ------------------------------ */
+
     /** Render next frame or start rendering sequence */
     function render() {
         // Clear canvas
@@ -98,11 +123,11 @@
 
         // Draw progress bar
         const gameTime = audioContext!.currentTime - logicalStartTime; // NOTE: guaranteed audioContext so make ts happy
-        canvasCtx.fillStyle = "#d4d4d8"; // zinc-300
+        canvasCtx.fillStyle = "#d4d4d8"; // zinc-300 (hex)
         canvasCtx.globalAlpha = 1;
-        canvasCtx.fillRect(0, canvasHeight - 6, gameTime / global.musicPlayerData.song.length * canvasWidth, 6);
+        canvasCtx.fillRect(0, canvasHeight - 5, gameTime / global.musicPlayerData.song.length * canvasWidth, 5);
 
-        // Clear long unhit notes
+        // Clear long unhit notes (temporary solution, doesn't work with other note types)
         let removeCount = 0;
         for (let i = 0; i < onScreenNotes.length; i++) {
             if (onScreenNotes[i].time + NOTE_AFTER_SECONDS < gameTime) {
@@ -111,7 +136,7 @@
         }
         onScreenNotes.splice(0, removeCount);
 
-        // Seek and add new notes
+        // Seek and add new notes (depends on note time in chart being in order)
         for (let i = onScreenNotesSeekIndex; i < chart.length; i++) {
             if (chart[i].time - NOTE_BEFORE_SECONDS <= gameTime) {
                 onScreenNotes.push(chart[i] as GameNote);
@@ -141,7 +166,7 @@
                 // Approach circle
                 const approachRemainingPercentage = (note.time - gameTime) / NOTE_APPROACH_SECONDS;
                 if (approachRemainingPercentage <= 1) {
-                    canvasCtx.strokeStyle = "#d4d4d8";
+                    canvasCtx.strokeStyle = "#d4d4d8"; // zinc-300 (hex)
                     canvasCtx.globalAlpha = 1 - approachRemainingPercentage;
                     canvasCtx.beginPath();
                     canvasCtx.arc(centerX, centerY, Math.max(noteRadius, approachRemainingPercentage * noteDiameter + noteRadius), 0, 2 * Math.PI);
@@ -168,42 +193,7 @@
 
 
 
-    /* Input */
-
-    /** Handle game input (TODO) */
-    function gameInput(row: number) {
-        for (let i = 0; i < onScreenNotes.length; i++) {
-            if (onScreenNotes[i].position.row === row) {
-                currentCombo++;
-                onScreenNotes[i].hitAt = audioContext!.currentTime;
-                // TODO: hit accuracy rating
-                break;
-            }
-        }
-    }
-
-    /** Handle exiting the game */
-    async function exit() {
-        isPausedOverlayShown = false;
-        global.gameScreenStatus = "before-game";
-        await sleep(1000);
-        setScreen("song-select", true);
-    }
-
-    /** Handle restarting the game (TODO) */
-    function restart() {
-        // :)
-    }
-
-    /** Handle toggling pause (TODO) */
-    function togglePause() {
-        if (isPausedOverlayShown === false) {
-            isPausedOverlayShown = true;
-        } else {
-            isPausedOverlayShown = false;
-            requestAnimationFrame(render);
-        }
-    }
+    /* ------------------------------ Input ------------------------------ */
 
     /** Event handler for keyboard game input */
     function keydownHandler(event: KeyboardEvent) {
@@ -260,52 +250,61 @@
         }
     }
 
+    /** Handle game input (TODO) */
+    function gameInput(row: number) {
+        for (let i = 0; i < onScreenNotes.length; i++) {
+            if (onScreenNotes[i].position.row === row && onScreenNotes[i].hitAt === -1) {
+                currentCombo++;
+                onScreenNotes[i].hitAt = audioContext!.currentTime; // TODO: is audioContext guaranteed?
+                // TODO: hit accuracy rating
+                break;
+            }
+        }
+    }
 
+    /** Handle exiting the game */
+    async function exit() {
+        isPausedOverlayShown = false;
+        global.gameScreenStatus = "before-game";
+        await sleep(1000);
+        setScreen("song-select", true);
+    }
 
-    /* Loading */
+    /** Handle restarting the game (TODO) */
+    function restart() {
+        // :)
+    }
 
-    // When component loads
-    onMount(() => {
-        const ctx = canvasElement.getContext("2d");
-        if (ctx === null) return; // TODO: can do notif
-        canvasCtx = ctx;
-        dpr = window.devicePixelRatio;
-        canvasCtx.scale(dpr, dpr);
-        window.addEventListener("keydown", keydownHandler);
-    });
-    onDestroy(() => {
-        window.removeEventListener("keydown", keydownHandler);
-    });
-
-    /** Start the game */
-    export function start() {
-        if (audioContext === null || musicSource === null) return false;
-        const startTime = audioContext.currentTime + NOTE_BEFORE_SECONDS;
-        musicSource.start(startTime);
-        logicalStartTime = startTime // + offset + audioContext.baseLatency + audioContext.outputLatency
-        render();
+    /** Handle toggling pause (TODO) */
+    function togglePause() {
+        if (isPausedOverlayShown === false) {
+            isPausedOverlayShown = true;
+        } else {
+            isPausedOverlayShown = false;
+            requestAnimationFrame(render);
+        }
     }
 </script>
 
 <!-- Game canvas -->
-<canvas bind:this={canvasElement} bind:clientWidth={canvasWidth} bind:clientHeight={canvasHeight} width={canvasWidth * dpr} height={canvasHeight * dpr}  class="w-full h-full"></canvas>
+<canvas bind:this={canvasElement} bind:clientWidth={canvasWidth} bind:clientHeight={canvasHeight} width={canvasWidth} height={canvasHeight}  class="w-full h-full"></canvas>
     
 <!-- Combo counter -->
-<div class="absolute left-12 bottom-12 flex flex-col flex-nowrap gap-2 items-start justify-end">
-    <span class="ml-0.5 text-zinc-300 text-lg font-comfortaa tracking-wide select-none">Combo</span>
-    <span class="text-zinc-300 text-5xl max-pc:text-4xl font-comfortaa font-light tracking-wide select-none">{comboText}</span>
+<div class="absolute left-12 max-padh:left-4 bottom-12 max-padh:bottom-4 flex flex-col flex-nowrap gap-2 items-start justify-end">
+    <span class="ml-0.5 text-zinc-300 text-lg max-padh:text-base font-comfortaa tracking-wide select-none">Combo</span>
+    <span class="text-zinc-300 text-5xl max-pc:text-4xl max-padh:text-3xl font-comfortaa font-light tracking-wide select-none">{comboText}</span>
 </div>
 
 <!-- Accuracy display -->
-<div class="absolute right-12 bottom-12 flex flex-col flex-nowrap gap-2 items-end justify-end">
-    <span class="ml-0.5 text-zinc-300 text-lg font-comfortaa tracking-wide select-none">Accuracy</span>
-    <span class="text-zinc-300 text-5xl max-pc:text-4xl font-comfortaa font-light tracking-wide select-none">{accuracyText}</span>
+<div class="absolute right-12 max-padh:right-4 bottom-12 max-padh:bottom-4 flex flex-col flex-nowrap gap-2 items-end justify-end">
+    <span class="ml-0.5 text-zinc-300 text-lg max-padh:text-base font-comfortaa tracking-wide select-none">Accuracy</span>
+    <span class="text-zinc-300 text-5xl max-pc:text-4xl max-padh:text-3xl font-comfortaa font-light tracking-wide select-none">{accuracyText}</span>
 </div>
 
 <!-- FPS Counter -->
 {#if global.userSettings.fpsCounter === true}
 <div class="absolute right-4 top-4 max-w-60 px-3 pt-1 pb-2 rounded-xl bg-zinc-800/90">
-    <span class="text-zinc-100 text-xs font-mono">{currentFPS} fps</span>
+    <span class="text-zinc-50 text-xs font-mono">{currentFPS} fps</span>
 </div>
 {/if}
 
@@ -318,19 +317,19 @@
         <p class="text-center text-zinc-400 text-2xl font-comfortaa tracking-widest">- Paused -</p>
 
         <!-- Pause buttons -->
-        <div transition:fly={{ y: 50, duration: 300, easing: circOut }} class="flex flex-row flex-nowrap gap-0">
+        <div transition:fly={{ duration: 300, easing: circOut, y: 50 }} class="flex flex-row flex-nowrap gap-0">
             <button onclick={exit} title="Exit" aria-label="Exit" class="group w-20 h-20 rounded-full active:translate-y-1 transition duration-100 ease-circ-out flex items-center justify-center">
-                <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="1.5" stroke="currentColor" class="size-8 stroke-zinc-400 group-hover:stroke-zinc-100 transition-colors duration-100 ease-circ-out">
+                <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="1.5" stroke="currentColor" class="size-8 stroke-zinc-400 group-hover:stroke-zinc-50 transition-colors duration-100 ease-circ-out">
                     <path stroke-linecap="round" stroke-linejoin="round" d="M6 18 18 6M6 6l12 12" />
                 </svg>
             </button>
             <button onclick={restart} title="Restart" aria-label="Restart" class="group w-20 h-20 rounded-full active:translate-y-1 transition duration-100 ease-circ-out flex items-center justify-center">
-                <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="1.5" stroke="currentColor" class="size-8 stroke-zinc-400 group-hover:stroke-zinc-100 transition-colors duration-100 ease-circ-out">
+                <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="1.5" stroke="currentColor" class="size-8 stroke-zinc-400 group-hover:stroke-zinc-50 transition-colors duration-100 ease-circ-out">
                     <path stroke-linecap="round" stroke-linejoin="round" d="M16.023 9.348h4.992v-.001M2.985 19.644v-4.992m0 0h4.992m-4.993 0 3.181 3.183a8.25 8.25 0 0 0 13.803-3.7M4.031 9.865a8.25 8.25 0 0 1 13.803-3.7l3.181 3.182m0-4.991v4.99" />
                 </svg>
             </button>
             <button onclick={togglePause} title="Resume" aria-label="Resume" class="group w-20 h-20 rounded-full active:translate-y-1 transition duration-100 ease-circ-out flex items-center justify-center">
-                <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="1.5" stroke="currentColor" class="size-8 stroke-zinc-400 group-hover:stroke-zinc-100 transition-colors duration-100 ease-circ-out">
+                <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="1.5" stroke="currentColor" class="size-8 stroke-zinc-400 group-hover:stroke-zinc-50 transition-colors duration-100 ease-circ-out">
                     <path stroke-linecap="round" stroke-linejoin="round" d="m8.25 4.5 7.5 7.5-7.5 7.5" />
                 </svg>
             </button>

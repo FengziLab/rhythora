@@ -43,5 +43,5 @@ body {
 
 ::selection{
     background-color: oklch(0.518 0.253 323.949); /* fuchsia-700 */
-    color: oklch(0.967 0.001 286.375); /* zinc-100 */
+    color: oklch(0.985 0 0); /* zinc-50 */
 }

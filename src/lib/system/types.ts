@@ -63,22 +63,22 @@ export interface Chart {
 
 export type Screen = "home" | "song-select" | "game" | "editor";
 
-export type GameScreenStatus = "inactive" | "loading" | "before-game" | "in-game" | "ending";
+export type OpenPanel = "none" | "settings" | "notifications";
 
-export type AutoFullscreenSetting = "off" | "on-intro" | "on-game" | "both";
+export type GameScreenStatus = "inactive" | "loading" | "before-game" | "in-game" | "ending";
 
 export interface UserSettings {
     musicVolume: number,
     soundEffectsVolume: number,
-    hitSoundVolume: number,
+    hitsoundsVolume: number,
     latency: number,
-    audoFullscreen: AutoFullscreenSetting,
     fpsCounter: boolean
 }
 
 export interface Global {
     screen: Screen,
     screenAnimationReverseDirection: boolean,
+    openPanel: OpenPanel,
     gameScreenStatus: GameScreenStatus,
     userSettings: UserSettings,
     musicPlayerData: MusicPlayerData,

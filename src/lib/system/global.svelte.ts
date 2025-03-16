@@ -1,18 +1,21 @@
-import type { Global, Screen } from "./types";
+import type { Global, Screen, UserSettings } from "./types";
+
+/* Default settings */
+export const DEFAULT_SETTINGS: UserSettings = {
+    musicVolume: 1,
+    soundEffectsVolume: 1,
+    hitsoundsVolume: 1,
+    latency: 0,
+    fpsCounter: false
+};
 
 /* Global states */
 export const global: Global = $state({
     screen: "home",
     screenAnimationReverseDirection: false,
+    openPanel: "none",
     gameScreenStatus: "inactive",
-    userSettings: {
-        musicVolume: 1,
-        soundEffectsVolume: 1,
-        hitSoundVolume: 1,
-        latency: 0,
-        audoFullscreen: "off",
-        fpsCounter: false
-    },
+    userSettings: DEFAULT_SETTINGS,
     musicPlayerData: {
         song: {
             name: "???",
@@ -28,7 +31,7 @@ export const global: Global = $state({
         },
         isPlaying: false
     },
-    waitingCount: 0
+    waitingCount: 1
 });
 
 /* Global state setters */
