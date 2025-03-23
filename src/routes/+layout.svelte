@@ -3,4 +3,7 @@
     let { children } = $props();
 </script>
 
-{@render children()}
+<!-- Base -->
+<div class="touch-manipulation selection:bg-fuchsia-700 selection:text-zinc-50">
+    {@render children()}
+</div>

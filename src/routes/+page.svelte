@@ -69,11 +69,21 @@
         introElement.addEventListener("keyup", introClick);
         global.waitingCount--;
         introStartTextElement.innerHTML = "- Click anywhere to start -";
-        
-        // Debug panel control
+
+        // Game-wise keydown listener
         window.addEventListener("keydown", event => {
+            // Debug panel control
             if (event.key === "Backspace" && !(document.activeElement?.tagName === "INPUT" || document.activeElement?.tagName === "TEXTAREA")) {
                 isDebugPanelShown = !isDebugPanelShown;
+            }
+
+            // Global main button and back button
+            else if (event.key === "Enter" && event.target === document.body) {
+                global.mainButtonElement?.click();
+            } else if (event.key === "Escape" && event.target === document.body) {
+                global.backButtonElement?.click();
+            } else if (event.key === "Escape") {
+                (document.activeElement as HTMLElement).blur(); // NOTE: the activeElement is probably an HTMLElement so make ts happy
             }
         });
 
@@ -118,8 +128,8 @@
 
 <!-- Intro screen -->
 <div bind:this={introElement} class="absolute inset-0 w-full h-full backdrop-blur-3xl {isIntroOutStylesEnabled === true ? "bg-black/0 -translate-y-full pointer-events-none" : "bg-black/50"} transition duration-1000 ease-[cubic-bezier(.18,.7,0,1)] flex flex-col flex-nowrap gap-36 items-center justify-center" hidden> <!-- DEBUG -->
-    <span class="text-zinc-50 text-8xl font-comfortaa font-medium tracking-widest">Rhythora</span>
-    <span bind:this={introStartTextElement} class="text-zinc-50 text-lg font-poppins tracking-widest">- Loading... -</span>
+    <span class="text-zinc-50 text-8xl font-comfortaa font-medium tracking-widest select-none">Rhythora</span>
+    <span bind:this={introStartTextElement} class="text-zinc-50 text-lg font-poppins tracking-widest select-none">- Loading... -</span>
 </div>
 
 <!-- Too little screen space warning screen -->

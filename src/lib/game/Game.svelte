@@ -2,7 +2,8 @@
     import { onMount, onDestroy } from "svelte";
     import { fade, fly } from "svelte/transition";
     import { circOut } from "svelte/easing";
-    import { audioContext, musicSource } from "$lib/system/audio-system";
+    import { audioContext, loadMusicSource, musicSource } from "$lib/system/audio-system";
+    import { pauseMusic, resumeMusic } from "$lib/system/audio-helpers";
     import { global, setScreen } from "$lib/system/global.svelte";
     import { sleep } from "$lib/system/helpers";
     import type { Note, GameNote } from "$lib/system/types";
@@ -18,11 +19,11 @@
     let canvasYOffset = $derived((canvasHeight - (noteDiameter * 6)) / 2);
     let isPausedOverlayShown = $state(false);
 
-    let logicalStartTime = -1;
-    const NOTE_BEFORE_SECONDS = 1;
-    const NOTE_AFTER_SECONDS = 0.3;
-    const NOTE_FADE_SECONDS = 0.3;
-    const NOTE_APPROACH_SECONDS = 0.6;
+    const NOTE_BEFORE_SECONDS = 0.8;
+    const NOTE_AFTER_SECONDS = 0.2;
+    const NOTE_FADE_SECONDS = 0.2;
+    const NOTE_APPROACH_SECONDS = 0.8;
+    const NOTE_HIT_FADE_SECONDS = 0.1;
     let onScreenNotes: GameNote[] = [];
     let onScreenNotesSeekIndex = 0;
     let currentCombo = $state(0);
@@ -30,8 +31,8 @@
     let accuracy = $state(1);
     let accuracyText = $derived(`${(accuracy * 100).toFixed(2)}%`);
 
-    let lastFPSUpdateTime = 0;
-    let framesRendered = 0;
+    let frameTimestamps: number[] = [];
+    let updateIntervalID: number;
     let currentFPS = $state(0);
 
 
@@ -47,18 +48,31 @@
 
         // Listen for keydown events
         window.addEventListener("keydown", keydownHandler);
+
+        // FPS Counter
+        updateIntervalID = setInterval(() => {
+            if (global.userSettings.fpsCounter === false) return;
+            let removeCount = 0;
+            for (let i = 0; frameTimestamps[i] < performance.now() - 1000; i++) { // NOTE: guaranteed audioContext so make ts happy?
+                removeCount++;
+            }
+            frameTimestamps.splice(0, removeCount);
+            currentFPS = frameTimestamps.length;
+        }, 50);
     });
     onDestroy(() => {
         window.removeEventListener("keydown", keydownHandler);
     });
 
-    /** Start the game after minimum appearing time */
+    /** Start rendering and start the music after minimum appearing time */
     export function start() {
         if (audioContext === null || musicSource === null) return false;
         const startTime = audioContext.currentTime + NOTE_BEFORE_SECONDS;
         musicSource.start(startTime);
-        logicalStartTime = startTime; // + offset + audioContext.baseLatency + audioContext.outputLatency
-        render();
+        global.musicPlayerData.logicalStartTime = startTime; // + offset + audioContext.baseLatency + audioContext.outputLatency
+        global.musicPlayerData.pauseTime = -1;
+        global.musicPlayerData.isPlaying = true;
+        requestAnimationFrame(render);
     }
 
     // Load chart
@@ -122,7 +136,7 @@
         canvasCtx.clearRect(0, 0, canvasWidth, canvasHeight);
 
         // Draw progress bar
-        const gameTime = audioContext!.currentTime - logicalStartTime; // NOTE: guaranteed audioContext so make ts happy
+        const gameTime = audioContext!.currentTime - global.musicPlayerData.logicalStartTime - (global.userSettings.latency / 1000); // NOTE: guaranteed audioContext so make ts happy
         canvasCtx.fillStyle = "#d4d4d8"; // zinc-300 (hex)
         canvasCtx.globalAlpha = 1;
         canvasCtx.fillRect(0, canvasHeight - 5, gameTime / global.musicPlayerData.song.length * canvasWidth, 5);
@@ -153,23 +167,34 @@
 
                 // Circle
                 canvasCtx.fillStyle = "#7823c2";
-                canvasCtx.globalAlpha = Math.min(Math.min(gameTime - (note.time - NOTE_BEFORE_SECONDS), (note.time + NOTE_AFTER_SECONDS) - gameTime) / NOTE_FADE_SECONDS, 1);
+                const noteOpacity = Math.min(
+                    Math.min(
+                        gameTime - (note.time - NOTE_BEFORE_SECONDS), // fade in
+                        (note.time + NOTE_AFTER_SECONDS) - gameTime, // fade out
+                    ) / NOTE_FADE_SECONDS, // convert faded time to opacity value
+                    note.hitAt !== -1 ? Math.max(NOTE_HIT_FADE_SECONDS - (gameTime - note.hitAt), 0) / NOTE_HIT_FADE_SECONDS : Infinity, // fade out on hit
+                    1
+                );
+                canvasCtx.globalAlpha = noteOpacity;
                 canvasCtx.beginPath();
                 canvasCtx.arc(centerX, centerY, noteRadius, 0, 2 * Math.PI);
                 canvasCtx.fill();
 
                 // Circle border
-                canvasCtx.lineWidth = Math.floor(noteRadius / 10);
+                const borderWidth = Math.floor(noteRadius / 10);
+                canvasCtx.lineWidth = borderWidth;
                 canvasCtx.strokeStyle = note.isSyncNote === true ? "#ed4e93" : "#a44eed";
+                canvasCtx.beginPath();
+                canvasCtx.arc(centerX, centerY, noteRadius - (borderWidth / 2), 0, 2 * Math.PI);
                 canvasCtx.stroke();
 
                 // Approach circle
                 const approachRemainingPercentage = (note.time - gameTime) / NOTE_APPROACH_SECONDS;
                 if (approachRemainingPercentage <= 1) {
                     canvasCtx.strokeStyle = "#d4d4d8"; // zinc-300 (hex)
-                    canvasCtx.globalAlpha = 1 - approachRemainingPercentage;
+                    canvasCtx.globalAlpha = Math.min(1 - approachRemainingPercentage, 1) * noteOpacity;
                     canvasCtx.beginPath();
-                    canvasCtx.arc(centerX, centerY, Math.max(noteRadius, approachRemainingPercentage * noteDiameter + noteRadius), 0, 2 * Math.PI);
+                    canvasCtx.arc(centerX, centerY, Math.max(noteRadius - (borderWidth / 2), approachRemainingPercentage * noteDiameter * 1.2 + noteRadius - (borderWidth / 2)), 0, 2 * Math.PI);
                     canvasCtx.stroke();
                 }
             }
@@ -177,14 +202,7 @@
 
         // FPS Counter
         if (global.userSettings.fpsCounter === true) {
-            if (gameTime - lastFPSUpdateTime > 0.5) {
-                currentFPS = Math.round(framesRendered / (gameTime - lastFPSUpdateTime));
-                console.log(currentFPS);
-                lastFPSUpdateTime = gameTime;
-                framesRendered = 0;
-            } else {
-                framesRendered++;
-            }
+            frameTimestamps.push(performance.now());
         }
 
         // Render next frame
@@ -245,17 +263,19 @@
         // Miscellaneous keys
         if (event.key === "Escape") {
             togglePause();
-        } else if ((event.key === "Tab" || event.ctrlKey === true || event.shiftKey === true || event.altKey === true) && isPausedOverlayShown === false) {
-            // event.preventDefault(); // DEBUG
+        } else if ((event.key === "Tab") && isPausedOverlayShown === false) { // DEBUG:  || event.ctrlKey === true || event.shiftKey === true || event.altKey === true
+            event.preventDefault();
         }
     }
 
     /** Handle game input (TODO) */
     function gameInput(row: number) {
+        if (audioContext === null) return;
+
         for (let i = 0; i < onScreenNotes.length; i++) {
             if (onScreenNotes[i].position.row === row && onScreenNotes[i].hitAt === -1) {
                 currentCombo++;
-                onScreenNotes[i].hitAt = audioContext!.currentTime; // TODO: is audioContext guaranteed?
+                onScreenNotes[i].hitAt = audioContext.currentTime - global.musicPlayerData.logicalStartTime;
                 // TODO: hit accuracy rating
                 break;
             }
@@ -270,25 +290,41 @@
         setScreen("song-select", true);
     }
 
-    /** Handle restarting the game (TODO) */
+    /** Handle restarting the game */
     function restart() {
-        // :)
+        onScreenNotes = [];
+        onScreenNotesSeekIndex = 0;
+        currentCombo = 0;
+        accuracy = 1;
+        isPausedOverlayShown = false;
+        if (loadMusicSource(null, false, 0) === true) {
+            start();
+        }
     }
 
-    /** Handle toggling pause (TODO) */
+    /** Handle toggling pause */
     function togglePause() {
         if (isPausedOverlayShown === false) {
             isPausedOverlayShown = true;
+            pauseMusic(-1);
         } else {
             isPausedOverlayShown = false;
             requestAnimationFrame(render);
+            resumeMusic(-1);
         }
     }
 </script>
 
 <!-- Game canvas -->
 <canvas bind:this={canvasElement} bind:clientWidth={canvasWidth} bind:clientHeight={canvasHeight} width={canvasWidth} height={canvasHeight}  class="w-full h-full"></canvas>
-    
+
+<!-- Pause button -->
+<button onclick={togglePause} title="Pause" aria-label="Pause" tabindex="-1" class="absolute left-0 top-0 group size-24 max-padh:size-16 outline-none flex items-center justify-center"> <!-- NOTE: add box-content if using padding to control offset -->
+    <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="currentColor" class="size-6 fill-zinc-300 group-hover:fill-zinc-50 group-focus:fill-zinc-50 transition-colors duration-150 ease-circ-out">
+        <path fill-rule="evenodd" d="M6.75 5.25a.75.75 0 0 1 .75-.75H9a.75.75 0 0 1 .75.75v13.5a.75.75 0 0 1-.75.75H7.5a.75.75 0 0 1-.75-.75V5.25Zm7.5 0A.75.75 0 0 1 15 4.5h1.5a.75.75 0 0 1 .75.75v13.5a.75.75 0 0 1-.75.75H15a.75.75 0 0 1-.75-.75V5.25Z" clip-rule="evenodd" />
+    </svg>
+</button>
+
 <!-- Combo counter -->
 <div class="absolute left-12 max-padh:left-4 bottom-12 max-padh:bottom-4 flex flex-col flex-nowrap gap-2 items-start justify-end">
     <span class="ml-0.5 text-zinc-300 text-lg max-padh:text-base font-comfortaa tracking-wide select-none">Combo</span>

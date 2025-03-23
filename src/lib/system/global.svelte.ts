@@ -14,6 +14,8 @@ export const global: Global = $state({
     screen: "home",
     screenAnimationReverseDirection: false,
     openPanel: "none",
+    mainButtonElement: null,
+    backButtonElement: null,
     gameScreenStatus: "inactive",
     userSettings: DEFAULT_SETTINGS,
     musicPlayerData: {
@@ -29,7 +31,9 @@ export const global: Global = $state({
             bpm: -1,
             offset: 0
         },
-        isPlaying: false
+        isPlaying: false,
+        logicalStartTime: 0,
+        pauseTime: -1
     },
     waitingCount: 1
 });

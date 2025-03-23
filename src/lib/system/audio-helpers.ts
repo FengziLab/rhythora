@@ -14,8 +14,12 @@ export async function loadNewMusicFromLink(link: string, play = false, fadeOutSe
     const localLoadTime = audioContext!.currentTime // NOTE: guaranteed audioContext so make ts happy
     latestLoadTime = localLoadTime;
 
-    // Fade out current music
-    unloadMusicSource(fadeOutSeconds);
+    // Fade out current music and update global music player data
+    if (unloadMusicSource(fadeOutSeconds) === true) {
+        global.musicPlayerData.logicalStartTime = 0;
+        global.musicPlayerData.pauseTime = -1;
+        global.musicPlayerData.isPlaying = false;
+    }
 
     // Load and decode audio
     global.waitingCount++;
@@ -27,10 +31,19 @@ export async function loadNewMusicFromLink(link: string, play = false, fadeOutSe
     // Ensure not overriding those started later but loaded faster
     if (localLoadTime === latestLoadTime) {
         // If we are the latest then check and ensure we unload current music again in case one is playing
-        unloadMusicSource(fadeOutSeconds);
+        if (unloadMusicSource(fadeOutSeconds)) {
+            global.musicPlayerData.logicalStartTime = 0;
+            global.musicPlayerData.pauseTime = -1;
+            global.musicPlayerData.isPlaying = false;
+        }
 
-        // Play the new one
+        // Load the new one, play and update global music player data if requested
         loadMusicSource(audioBuffer, play, fadeInSeconds);
+        if (play === true) {
+            global.musicPlayerData.logicalStartTime = audioContext!.currentTime; // NOTE: could be slightly less accurate, use manual control for more accuracy
+            global.musicPlayerData.pauseTime = -1;
+            global.musicPlayerData.isPlaying = true;
+        }
     } else { // DEBUG
         if (musicSource !== null) {
             console.info("[DEBUG] Music Load ID check: prevented!");
@@ -96,8 +109,31 @@ export async function playRandomBackgroundMusic(fadeSeconds = -1) {
 
     // Update song data
     global.musicPlayerData.song = music;
-    global.musicPlayerData.isPlaying = true;
 
     // Play new music
     await loadNewMusicFromLink(music.audioLink, true, fadeSeconds, fadeSeconds);
+}
+
+/** Pause the music */
+export function pauseMusic(fadeOutSeconds = -1): boolean {
+    if (audioContext === null) return false;
+    const currentTime = audioContext.currentTime;
+    if (unloadMusicSource(fadeOutSeconds) === true) {
+        global.musicPlayerData.pauseTime = currentTime - global.musicPlayerData.logicalStartTime;
+        global.musicPlayerData.isPlaying = false;
+        return true;
+    }
+    return false;
+}
+
+/** Resume the music */
+export function resumeMusic(fadeInSeconds = -1): boolean {
+    if (loadMusicSource(null, false, fadeInSeconds) === true) {
+        musicSource!.start(0, global.musicPlayerData.pauseTime); // NOTE: guaranteed musicSource so make ts happy
+        global.musicPlayerData.logicalStartTime = audioContext!.currentTime - global.musicPlayerData.pauseTime; // NOTE: guaranteed audioContext so make ts happy
+        global.musicPlayerData.pauseTime = -1;
+        global.musicPlayerData.isPlaying = true;
+        return true;
+    }
+    return false;
 }

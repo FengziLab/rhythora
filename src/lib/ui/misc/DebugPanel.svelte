@@ -1,7 +1,8 @@
 <script lang="ts">
     import { onMount, onDestroy } from "svelte";
-    import { audioContext, musicVolumeNode, fadeToMusicVolume } from "$lib/system/audio-system";
+    import { audioContext, musicVolumeNode } from "$lib/system/audio-system";
     import { playRandomBackgroundMusic } from "$lib/system/audio-helpers";
+    import { global } from "$lib/system/global.svelte";
 
     // Local states
     let displayText = $state("Debug");
@@ -10,12 +11,25 @@
     /** Update debug info */
     function updateValue() {
         displayText = `
-            [Audio System] <br />
-            currentTime: ${audioContext?.currentTime.toFixed(2)} <br />
-            musicVolume: ${musicVolumeNode?.gain.value.toFixed(2)} <br />
-            baseLatency: ${audioContext?.baseLatency} <br /> 
-            outputLatency: ${audioContext?.outputLatency} <br />
-            state: ${audioContext?.state} <br />
+            [Audio System] <br/>
+            currentTime: ${audioContext?.currentTime.toFixed(2)} <br/>
+            musicVolume: ${musicVolumeNode?.gain.value.toFixed(2)} <br/>
+            baseLatency: ${audioContext?.baseLatency} <br/> 
+            outputLatency: ${audioContext?.outputLatency} <br/>
+            state: ${audioContext?.state} <br/><br/>
+            [Music Player] <br/>
+            isPlaying: ${global.musicPlayerData.isPlaying} <br/>
+            logicalStartTime: ${global.musicPlayerData.logicalStartTime.toFixed(2)} <br/>
+            pauseTime: ${global.musicPlayerData.pauseTime.toFixed(2)} <br/><br/>
+            [UI] <br/>
+            screen: ${global.screen} <br/>
+            reverseDirection: ${global.screenAnimationReverseDirection} <br/>
+            openPanel: ${global.openPanel} <br/>
+            mainButtonElement: ${global.mainButtonElement?.innerHTML} <br/>
+            backButtonElement: ${global.backButtonElement?.innerHTML} <br/>
+            gameScreenStatus: ${global.gameScreenStatus} <br/>
+            waitingCount: ${global.waitingCount} <br />
+            activeElement: ${document?.activeElement?.tagName} <br /><br />
         `;
     }
 
@@ -38,20 +52,14 @@
 
     <!-- Buttons -->
     <div class="flex flex-row flex-wrap gap-2">
+        <button onclick={async () => { global.openPanel = "settings" }} class="h-8 px-2 rounded-md hover:bg-zinc-500/50 active:translate-y-0.5 transition duration-100 ease-[ease] flex items-center justify-center">
+            <span class="text-zinc-50 text-xs font-mono select-none">Settings</span>
+        </button>
         <button onclick={async () => { await playRandomBackgroundMusic(1) }} class="h-8 px-2 rounded-md hover:bg-zinc-500/50 active:translate-y-0.5 transition duration-100 ease-[ease] flex items-center justify-center">
             <span class="text-zinc-50 text-xs font-mono select-none">New BGM</span>
         </button>
-        <!-- <button onclick={() => { fadeToMusicVolume(2) }} class="h-8 px-2 rounded-md hover:bg-zinc-500/50 active:translate-y-0.5 transition duration-100 ease-[ease] flex items-center justify-center">
-            <span class="text-zinc-50 text-xs font-mono select-none">Vol Up</span>
-        </button> -->
-        <!-- <button onclick={() => { fadeToMusicVolume(1) }} class="h-8 px-2 rounded-md hover:bg-zinc-500/50 active:translate-y-0.5 transition duration-100 ease-[ease] flex items-center justify-center">
-            <span class="text-zinc-50 text-xs font-mono select-none">Vol Down</span>
-        </button> -->
-        <button onclick={async () => { await audioContext?.resume() }} class="h-8 px-2 rounded-md hover:bg-zinc-500/50 active:translate-y-0.5 transition duration-100 ease-[ease] flex items-center justify-center">
-            <span class="text-zinc-50 text-xs font-mono select-none">Resume</span>
-        </button>
-        <button onclick={async () => { await audioContext?.suspend() }} class="h-8 px-2 rounded-md hover:bg-zinc-500/50 active:translate-y-0.5 transition duration-100 ease-[ease] flex items-center justify-center">
-            <span class="text-zinc-50 text-xs font-mono select-none">Suspend</span>
+        <button onclick={async () => { if (audioContext?.state === "suspended") { await audioContext?.resume(); } else { await audioContext?.suspend() } }} class="h-8 px-2 rounded-md hover:bg-zinc-500/50 active:translate-y-0.5 transition duration-100 ease-[ease] flex items-center justify-center">
+            <span class="text-zinc-50 text-xs font-mono select-none">Freeze</span>
         </button>
     </div>
 </div>

@@ -87,7 +87,7 @@
 
     <!-- Info -->
     <div class="mt-16 flex flex-col flex-nowrap gap-0">
-        <p class="text-center text-zinc-500 text-sm font-comfortaa select-none">Rhythora Beta 20250314</p>
+        <p class="text-center text-zinc-500 text-sm font-comfortaa select-none">Rhythora Beta 20250322</p>
         <p class="text-center text-zinc-500 text-sm font-comfortaa select-none">A <a href="https://fengzi.dev/" target="_blank" rel="noreferrer" class="hover:text-zinc-400 transition transition-100 ease-circ-out">Fengzi Lab</a> project</p>
     </div>
 </div>

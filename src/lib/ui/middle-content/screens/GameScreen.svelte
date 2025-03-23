@@ -16,7 +16,6 @@
         global.gameScreenStatus = "loading";
         const song = { name: "最後的灰燼", author: "Ds_Squid", mapper: "fengziya", audioLink: "https://rhythora.us-lax-1.linodeobjects.com/最後的灰燼.mp3", length: 114, bpm: 120, offset: 0 }; // TODO: temporary
         global.musicPlayerData.song = song;
-        global.musicPlayerData.isPlaying = true;
         await Promise.all([loadNewMusicFromLink(song.audioLink, false, 1.5, -1), sleep(1500)]);
         
         // Fade out loading info, wait [500]-1000ms: loading info animation release done

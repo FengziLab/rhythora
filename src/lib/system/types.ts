@@ -13,7 +13,9 @@ export interface MusicData {
 
 export interface MusicPlayerData {
     song: MusicData,
-    isPlaying: boolean
+    isPlaying: boolean,
+    logicalStartTime: number,
+    pauseTime: number
 }
 
 export type NoteType = "tap" | "hold" | "stay";
@@ -79,6 +81,8 @@ export interface Global {
     screen: Screen,
     screenAnimationReverseDirection: boolean,
     openPanel: OpenPanel,
+    mainButtonElement: HTMLButtonElement | null,
+    backButtonElement: HTMLButtonElement | null,
     gameScreenStatus: GameScreenStatus,
     userSettings: UserSettings,
     musicPlayerData: MusicPlayerData,
