@@ -35,8 +35,6 @@
     let updateIntervalID: number;
     let currentFPS = $state(0);
 
-
-
     /* ------------------------------ Loading ------------------------------ */
 
     // When game area loads
@@ -65,18 +63,25 @@
     });
 
     /** Start rendering and start the music after minimum appearing time */
-    export function start() {
+    export function canStart() {
         if (audioContext === null || musicSource === null) return false;
+
+        // Delay minimum appearing time
         const startTime = audioContext.currentTime + NOTE_BEFORE_SECONDS;
+
+        // Schedule music start
         musicSource.start(startTime);
-        global.musicPlayerData.logicalStartTime = startTime; // + offset + audioContext.baseLatency + audioContext.outputLatency
+
+        // Update global music player data
+        global.musicPlayerData.logicalStartTime = startTime; // TODO:  + offset + audioContext.baseLatency + audioContext.outputLatency
         global.musicPlayerData.pauseTime = -1;
         global.musicPlayerData.isPlaying = true;
+
+        // Start rendering right away
         requestAnimationFrame(render);
     }
 
     // Load chart
-    // DEBUG: temporary
     const CHART: Note[] = [
         { type: "tap", time: 0, position: { row: 1, xPos: 0 } },
         { type: "tap", time: 1, position: { row: 1, xPos: 1 } },
@@ -108,7 +113,7 @@
         { type: "tap", time: 18.25, position: { row: 3, xPos: 8.25 } },
         { type: "tap", time: 18.75, position: { row: 3, xPos: 8.75 } },
         { type: "tap", time: 19, position: { row: 2, xPos: 9 } },
-    ];
+    ]; // DEBUG: temporary
 
     // Generate game chart from chart and mark sync notes
     const chart: GameNote[] = CHART.map(note => {
@@ -125,8 +130,6 @@
             chart[i - 1].isSyncNote = true;
         }
     }
-
-
 
     /* ------------------------------ Visuals ------------------------------ */
 
@@ -166,7 +169,7 @@
                 const centerY = note.position.row * noteDiameter + noteRadius + canvasYOffset;
 
                 // Circle
-                canvasCtx.fillStyle = "#7823c2";
+                canvasCtx.fillStyle = note.hitAt === -1 ? "#7823c2" : "#226622";
                 const noteOpacity = Math.min(
                     Math.min(
                         gameTime - (note.time - NOTE_BEFORE_SECONDS), // fade in
@@ -208,8 +211,6 @@
         // Render next frame
         if (isPausedOverlayShown === false) requestAnimationFrame(render);
     }
-
-
 
     /* ------------------------------ Input ------------------------------ */
 
@@ -289,7 +290,6 @@
         await sleep(1000);
         setScreen("song-select", true);
     }
-
     /** Handle restarting the game */
     function restart() {
         onScreenNotes = [];
@@ -298,15 +298,14 @@
         accuracy = 1;
         isPausedOverlayShown = false;
         if (loadMusicSource(null, false, 0) === true) {
-            start();
+            canStart();
         }
     }
-
     /** Handle toggling pause */
     function togglePause() {
-        if (isPausedOverlayShown === false) {
-            isPausedOverlayShown = true;
+        if (isPausedOverlayShown === false && audioContext!.currentTime > global.musicPlayerData.logicalStartTime) { // NOTE: will return false anyway so make ts happy
             pauseMusic(-1);
+            isPausedOverlayShown = true;
         } else {
             isPausedOverlayShown = false;
             requestAnimationFrame(render);

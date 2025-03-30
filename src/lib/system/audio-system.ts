@@ -6,10 +6,10 @@ import { global } from "$lib/system/global.svelte";
 export let audioContext: AudioContext | null = null;
 
 // Effect nodes
-export let analyserNode: AnalyserNode | null = null; // only for music
-export let musicVolumeNode: GainNode | null = null; // special: comes with each audio source
+export let musicVolumeNode: GainNode | null = null; // special: comes with each music source
 export let soundEffectsVolumeNode: GainNode | null = null;
 export let hitsoundsVolumeNode: GainNode | null = null;
+export let analyserNode: AnalyserNode | null = null; // special: comes with each music source
 
 // Sources
 export let musicBuffer: AudioBuffer | null = null;
@@ -25,10 +25,7 @@ export function initializeAudioContext(): boolean {
     // Initialize audio context
     audioContext = new AudioContext({ latencyHint: "interactive" });
 
-    // Initialize effect nodes other than music volume
-    analyserNode = new AnalyserNode(audioContext, {
-        fftSize: 512
-    });
+    // Initialize effect nodes other than music volume and analyser node
     soundEffectsVolumeNode = new GainNode(audioContext, {
         gain: global.userSettings.soundEffectsVolume
     });
@@ -36,8 +33,7 @@ export function initializeAudioContext(): boolean {
         gain: global.userSettings.hitsoundsVolume
     });
 
-    // Connect effect nodes other than music volume
-    analyserNode.connect(audioContext.destination);
+    // Connect effect nodes other than music volume and analyser node
     soundEffectsVolumeNode.connect(audioContext.destination);
     hitsoundsVolumeNode.connect(audioContext.destination);
 
@@ -63,12 +59,12 @@ export function fadeToHitsoundsVolume(value: number, seconds = 0): boolean {
     return true;
 }
 
-/** Create new music volume node and music source node from the current music buffer or a new audio buffer if specified, start playing if requested, and fade in music volume from 0 to set volume if seconds >= 0 */
+/** Create new music volume node, analyser node, and music source node from the current music buffer or a new audio buffer if specified, start playing if requested, and fade in music volume from 0 to set volume if seconds >= 0 */
 export function loadMusicSource(audioBuffer: AudioBuffer | null = null, play = false, fadeInSeconds = -1): boolean {
-    if (audioContext === null || analyserNode === null) return false;
+    if (audioContext === null) return false;
 
-    // Fail if there exists a current music volume node or music source node
-    if (musicVolumeNode !== null || musicSource !== null) return false;    
+    // Fail if there exists a current music volume node or analyser node or music source node
+    if (musicVolumeNode !== null || analyserNode !== null || musicSource !== null) return false;    
 
     // Create nodes and connect to audio graph
     if (audioBuffer !== null) {
@@ -79,10 +75,13 @@ export function loadMusicSource(audioBuffer: AudioBuffer | null = null, play = f
     musicVolumeNode = new GainNode(audioContext, {
         gain: fadeInSeconds >= 0 ? 0 : global.userSettings.musicVolume // set volume at 0 if time is set, or set straight to setting value
     });
+    analyserNode = new AnalyserNode(audioContext, {
+        fftSize: 512
+    });
     musicSource = new AudioBufferSourceNode(audioContext, {
         buffer: musicBuffer
     });
-    musicSource.connect(musicVolumeNode).connect(analyserNode);
+    musicSource.connect(analyserNode).connect(musicVolumeNode).connect(audioContext.destination);
 
     // Start playing if requested
     if (play === true) {
@@ -97,13 +96,15 @@ export function loadMusicSource(audioBuffer: AudioBuffer | null = null, play = f
     return true;
 }
 
-/** Invalidate current music volume node and music source node, fade out music volume to 0 if seconds >= 0, then disconnect both of them */
+/** Invalidate current music volume node, analyser node, and music source node, fade out music volume to 0 if seconds >= 0, then disconnect both of them */
 export function unloadMusicSource(fadeOutSeconds = -1): boolean {
-    if (audioContext === null || musicVolumeNode === null || musicSource === null) return false;
+    if (audioContext === null || musicVolumeNode === null || analyserNode === null || musicSource === null) return false;
 
     // Dereference nodes
     const outMusicVolumeNode = musicVolumeNode;
     musicVolumeNode = null;
+    const outAnalyserNode = analyserNode;
+    analyserNode = null;
     const outMusicSource = musicSource;
     musicSource = null;
 
@@ -113,12 +114,14 @@ export function unloadMusicSource(fadeOutSeconds = -1): boolean {
         outMusicSource.stop(audioContext.currentTime + fadeOutSeconds); // NOTE: unwantedly fires ended event
         setTimeout(() => {
             outMusicSource.disconnect();
+            outAnalyserNode.disconnect();
             outMusicVolumeNode.disconnect();
         }, fadeOutSeconds * 1000);
     } else {
         // Unload right away
         outMusicSource.stop(); // NOTE: unwantedly fires ended event
         outMusicSource.disconnect();
+        outAnalyserNode.disconnect();
         outMusicVolumeNode.disconnect();
     }
 

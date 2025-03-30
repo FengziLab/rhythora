@@ -1,9 +1,9 @@
 <script lang="ts">
-    import { global } from "$lib/system/global.svelte";
     import HomeScreen from "./screens/HomeScreen.svelte";
     import SongSelectScreen from "./screens/SongSelectScreen.svelte";
     import GameScreen from "./screens/GameScreen.svelte";
     import EditorScreen from "./screens/EditorScreen.svelte";
+    import { global } from "$lib/system/global.svelte";
 </script>
 
 <!-- Middle section -->

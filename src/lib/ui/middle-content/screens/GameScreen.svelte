@@ -3,7 +3,7 @@
     import { fly } from "svelte/transition";
     import { circIn, circOut } from "svelte/easing";
     import Game from "$lib/game/Game.svelte";
-    import { loadNewMusicFromLink } from "$lib/system/audio-helpers";
+    import { loadNewMusicFromLink, BACKGROUND_MUSIC_LIST } from "$lib/system/audio-helpers";
     import { global } from "$lib/system/global.svelte";
     import { sleep } from "$lib/system/helpers";
 
@@ -14,21 +14,20 @@
     onMount(async () => {
         // Fade in loading info and load resources, wait finish && [1500]-2000ms: loading info animation attack + sustain done
         global.gameScreenStatus = "loading";
-        const song = { name: "最後的灰燼", author: "Ds_Squid", mapper: "fengziya", audioLink: "https://rhythora.us-lax-1.linodeobjects.com/最後的灰燼.mp3", length: 114, bpm: 120, offset: 0 }; // TODO: temporary
-        global.musicPlayerData.song = song;
-        await Promise.all([loadNewMusicFromLink(song.audioLink, false, 1.5, -1), sleep(1500)]);
-        
+        global.musicPlayerData.song = BACKGROUND_MUSIC_LIST[4]; // TODO: temporary
+        await Promise.all([loadNewMusicFromLink(global.musicPlayerData.song.audioLink, false, 1.5, -1), sleep(1500)]);
+
         // Fade out loading info, wait [500]-1000ms: loading info animation release done
         global.gameScreenStatus = "before-game";
         // TODO: fade in song cover/background
         await sleep(500);
-        
+
         // Fade in main game area, wait [500]-1000ms: main game area attack done
         global.gameScreenStatus = "in-game";
-        await sleep(500);
-        
+        // await sleep(500);
+
         // Start game
-        gameElement.start();
+        gameElement.canStart();
     });
 </script>
 

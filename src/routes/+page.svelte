@@ -1,5 +1,6 @@
 <script lang="ts">
     import { onMount } from "svelte";
+    import { fade } from "svelte/transition";
     import FlashEffect from "$lib/ui/misc/FlashEffect.svelte";
     import TopBar from "$lib/ui/top-bar/TopBar.svelte";
     import MiddleContent from "$lib/ui/middle-content/MiddleContent.svelte";
@@ -8,35 +9,13 @@
     import DebugPanel from "$lib/ui/misc/DebugPanel.svelte";
     import { audioContext, initializeAudioContext } from "$lib/system/audio-system";
     import { playRandomBackgroundMusic } from "$lib/system/audio-helpers";
-    import { DEFAULT_SETTINGS, global } from "$lib/system/global.svelte";
+    import { global, setScreen } from "$lib/system/global.svelte";
 
     // Local states
     let introElement: HTMLDivElement;
     let introStartTextElement: HTMLSpanElement;
     let isIntroOutStylesEnabled = $state(false);
-    let flashEffectElement: FlashEffect;
     let isDebugPanelShown = $state(false);
-
-    /** Event handler to disable intro and enter the game */
-    async function introClick() {
-        // Remove intro-specific event listeners
-        introElement.removeEventListener("click", introClick);
-        introElement.removeEventListener("keyup", introClick);
-
-        // Ensure audio is playable since this is first user event and start sounds
-        initializeAudioContext();
-        if (audioContext!.state === "suspended") await audioContext!.resume(); // NOTE: guaranteed audioContext so make ts happy
-        // TODO: play sound effect
-
-        // Transition out intro element
-        isIntroOutStylesEnabled = true;
-        setTimeout(() => {
-            introElement.remove();
-        }, 1000);
-
-        // Background flashing effect
-        flashEffectElement.start();
-    }
 
     // When js is ready
     onMount(async () => {
@@ -63,6 +42,20 @@
         } else if (storedFPSCounter === "false") {
             global.userSettings.fpsCounter = false;
         }
+        const storedBackgroundFlashEffect = localStorage.getItem("userSettings.backgroundFlashEffect");
+        if (storedBackgroundFlashEffect === "true") {
+            global.userSettings.backgroundFlashEffect = true;
+        } else if (storedBackgroundFlashEffect === "false") {
+            global.userSettings.backgroundFlashEffect = false;
+        }
+        const storedChosenLevel = localStorage.getItem("chosenLevel");
+        if (storedChosenLevel === "ez") {
+            global.chosenLevel = "ez";
+        } else if (storedChosenLevel === "hd") {
+            global.chosenLevel = "hd";
+        } else if (storedChosenLevel === "in") {
+            global.chosenLevel = "in";
+        }
 
         // Can click and start game, also update hint text    
         introElement.addEventListener("click", introClick);
@@ -79,9 +72,30 @@
 
             // Global main button and back button
             else if (event.key === "Enter" && event.target === document.body) {
-                global.mainButtonElement?.click();
+                switch (global.screen) {
+                    case "home":
+                        setScreen("song-select");
+                        break;
+                    case "song-select":
+                        setScreen("game");
+                        break;
+                    case "editor":
+                        setScreen("home");
+                }
             } else if (event.key === "Escape" && event.target === document.body) {
-                global.backButtonElement?.click();
+                switch (global.screen) {
+                    case "song-select":
+                        setScreen("home", true);
+                        break;
+                    case "game":
+                        // if (global.gameScreenStatus === "loading") {
+                        //     setScreen("song-select", true);
+                        // } // TODO
+                        break;
+                    case "editor":
+                        setScreen("home");
+                        break;
+                }
             } else if (event.key === "Escape") {
                 (document.activeElement as HTMLElement).blur(); // NOTE: the activeElement is probably an HTMLElement so make ts happy
             }
@@ -90,6 +104,24 @@
         // Start loading random background music (assume audioContext is suspended instead of starting source on user input since creating music source can take time) (TODO: actually just depends on if i want to ensure initial bgm loads before intro screen can go up)
         // await playRandomBackgroundMusic(-1); // DEBUG
     });
+
+    /** Event handler to disable intro and enter the game */
+    async function introClick() {
+        // Remove intro-specific event listeners
+        introElement.removeEventListener("click", introClick);
+        introElement.removeEventListener("keyup", introClick);
+
+        // Ensure audio is playable since this is first user event and start sounds
+        initializeAudioContext();
+        if (audioContext!.state === "suspended") await audioContext!.resume(); // NOTE: guaranteed audioContext so make ts happy
+        // TODO: play sound effect
+
+        // Transition out intro element
+        isIntroOutStylesEnabled = true;
+        setTimeout(() => {
+            introElement.remove();
+        }, 1000);
+    }
 </script>
 
 <svelte:head>
@@ -101,10 +133,13 @@
 </svelte:head>
 
 <!-- Background -->
-<div class="absolute inset-0 w-full h-full bg-[url(/assets/background2.jpg)] bg-no-repeat bg-cover bg-center brightness-50"></div>
+<div class="absolute inset-0 w-full h-full bg-[url(/assets/background-0.jpg)] bg-no-repeat bg-cover bg-center brightness-60"></div>
+<!-- {#if (global.gameScreenStatus !== "inactive" && global.gameScreenStatus !== "loading")}
+<div transition:fade={{ duration: 500 }} class="absolute inset-0 w-full h-full bg-[url(/assets/background-1.jpg)] bg-no-repeat bg-cover bg-center brightness-50"></div>
+{/if} -->
 <div class="absolute inset-0 w-full h-full {global.screen === "game" ?  "bg-black/50" : ""} backdrop-blur-3xl transition duration-1000 ease-circ-out overflow-clip">
     <!-- Background music flashing effect -->
-    <FlashEffect bind:this={flashEffectElement} />
+    <FlashEffect />
 
     <!-- Page layout -->
     <div class="w-full h-full flex flex-col flex-nowrap">

@@ -30,7 +30,7 @@
 
 <div class="flex flex-row flex-nowrap gap-3 items-center justify-start">
     <input type="range" bind:value {min} {max} {step} title={Math.round(value * displayMultiplier).toString()} class="w-full h-8 rounded-lg appearance-none slider" style="--position: calc({(value / max) * 100 + "%"} + (({value / max}) - 0.5) * -1 * 0.625rem);">
-    <input type="text" bind:value={displayValue} maxlength={Math.round(max * displayMultiplier).toString().length} pattern="\d*" inputmode="numeric" spellcheck="false" autocomplete="off" autocorrect="off" class="w-10 h-8 rounded-xs border-b-2 border-transparent focus:border-fuchsia-300 outline-0 translate-y-px transition duration-150 ease-circ-out text-center text-zinc-50 font-comfortaa">
+    <input type="text" bind:value={displayValue} maxlength={Math.round(max * displayMultiplier).toString().length} pattern="\d*" inputmode="numeric" spellcheck="false" autocomplete="off" autocorrect="off" class="w-10 h-8 border-b-2 border-transparent focus:border-fuchsia-300 outline-0 translate-y-px transition duration-150 ease-circ-out text-center text-zinc-50 font-comfortaa">
 </div>
 
 <style>

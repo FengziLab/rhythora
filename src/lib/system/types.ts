@@ -74,17 +74,20 @@ export interface UserSettings {
     soundEffectsVolume: number,
     hitsoundsVolume: number,
     latency: number,
-    fpsCounter: boolean
+    fpsCounter: boolean,
+    backgroundFlashEffect: boolean
 }
+
+export type Level = "ez" | "hd" | "in";
 
 export interface Global {
     screen: Screen,
     screenAnimationReverseDirection: boolean,
     openPanel: OpenPanel,
-    mainButtonElement: HTMLButtonElement | null,
-    backButtonElement: HTMLButtonElement | null,
     gameScreenStatus: GameScreenStatus,
     userSettings: UserSettings,
+    chosenLevel: Level,
     musicPlayerData: MusicPlayerData,
-    waitingCount: number
+    waitingCount: number,
+    debugMessage: string
 }

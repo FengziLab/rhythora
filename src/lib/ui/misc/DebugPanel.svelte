@@ -5,33 +5,9 @@
     import { global } from "$lib/system/global.svelte";
 
     // Local states
-    let displayText = $state("Debug");
+    let displayTextCol1 = $state("Debug");
+    let displayTextCol2 = $state("Debug");
     let updateIntervalID: number;
-
-    /** Update debug info */
-    function updateValue() {
-        displayText = `
-            [Audio System] <br/>
-            currentTime: ${audioContext?.currentTime.toFixed(2)} <br/>
-            musicVolume: ${musicVolumeNode?.gain.value.toFixed(2)} <br/>
-            baseLatency: ${audioContext?.baseLatency} <br/> 
-            outputLatency: ${audioContext?.outputLatency} <br/>
-            state: ${audioContext?.state} <br/><br/>
-            [Music Player] <br/>
-            isPlaying: ${global.musicPlayerData.isPlaying} <br/>
-            logicalStartTime: ${global.musicPlayerData.logicalStartTime.toFixed(2)} <br/>
-            pauseTime: ${global.musicPlayerData.pauseTime.toFixed(2)} <br/><br/>
-            [UI] <br/>
-            screen: ${global.screen} <br/>
-            reverseDirection: ${global.screenAnimationReverseDirection} <br/>
-            openPanel: ${global.openPanel} <br/>
-            mainButtonElement: ${global.mainButtonElement?.innerHTML} <br/>
-            backButtonElement: ${global.backButtonElement?.innerHTML} <br/>
-            gameScreenStatus: ${global.gameScreenStatus} <br/>
-            waitingCount: ${global.waitingCount} <br />
-            activeElement: ${document?.activeElement?.tagName} <br /><br />
-        `;
-    }
 
     // Call update
     onMount(() => {
@@ -41,25 +17,58 @@
     onDestroy(() => {
         clearInterval(updateIntervalID);
     });
+
+    /** Update debug info */
+    function updateValue() {
+        displayTextCol1 = `
+            [Audio System] <br/>
+            currentTime: ${audioContext?.currentTime.toFixed(2)} <br/>
+            musicVolume: ${musicVolumeNode?.gain.value.toFixed(2)} <br/>
+            baseLatency: ${audioContext?.baseLatency} <br/> 
+            outputLatency: ${audioContext?.outputLatency} <br/>
+            state: ${audioContext?.state} <br/><br/>
+            [Music Player] <br/>
+            isPlaying: ${global.musicPlayerData.isPlaying} <br/>
+            logicalStartTime: ${global.musicPlayerData.logicalStartTime.toFixed(2)} <br/>
+            pauseTime: ${global.musicPlayerData.pauseTime.toFixed(2)} <br/>
+        `;
+        displayTextCol2 = `
+            [UI] <br/>
+            screen: ${global.screen} <br/>
+            reverseDirection: ${global.screenAnimationReverseDirection} <br/>
+            openPanel: ${global.openPanel} <br/>
+            gameScreenStatus: ${global.gameScreenStatus} <br/>
+            chosenLevel: ${global.chosenLevel} <br/>
+            waitingCount: ${global.waitingCount} <br/>
+            activeElement: ${document?.activeElement?.tagName} <br/>
+        `;
+    }
 </script>
 
 <!-- Debug panel -->
-<div class="absolute left-4 bottom-4 max-w-60 p-2 rounded-xl bg-zinc-800/90 border-t-2 border-b-2 border-zinc-800/90">
-    <!-- Info display -->
-    <div class="h-full p-2">
-        <span class="text-zinc-50 text-xs font-mono">{@html displayText}(Press Backspace to exit)</span>
+<div class="absolute left-4 bottom-4 max-w-128 p-2 rounded-xl bg-zinc-800/90 border-t-2 border-b-2 border-zinc-800/90">
+    <!-- Data display -->
+    <div class="p-2 flex flex-row flex-wrap gap-4">
+        <span class="text-zinc-50 text-xs font-mono">{@html displayTextCol1}</span>
+        <span class="text-zinc-50 text-xs font-mono">{@html displayTextCol2}</span>
+    </div>
+
+    <!-- Info -->
+    <div class="mt-2 px-2 flex flex-col flex-nowrap gap-2">
+        <span class="text-zinc-50 text-xs font-mono">debugMessage: {global.debugMessage}</span>
+        <span class="text-zinc-50 text-xs font-mono">(Press Backspace to exit)</span>
     </div>
 
     <!-- Buttons -->
-    <div class="flex flex-row flex-wrap gap-2">
-        <button onclick={async () => { global.openPanel = "settings" }} class="h-8 px-2 rounded-md hover:bg-zinc-500/50 active:translate-y-0.5 transition duration-100 ease-[ease] flex items-center justify-center">
+    <div class="mt-2 flex flex-row flex-wrap gap-2">
+        <button onclick={async () => { global.openPanel = global.openPanel !== "settings" ? "settings" : "none" }} class="h-8 px-2 rounded-md hover:bg-zinc-500/50 active:translate-y-0.5 transition duration-100 ease-[ease] flex items-center justify-center">
             <span class="text-zinc-50 text-xs font-mono select-none">Settings</span>
         </button>
         <button onclick={async () => { await playRandomBackgroundMusic(1) }} class="h-8 px-2 rounded-md hover:bg-zinc-500/50 active:translate-y-0.5 transition duration-100 ease-[ease] flex items-center justify-center">
             <span class="text-zinc-50 text-xs font-mono select-none">New BGM</span>
         </button>
         <button onclick={async () => { if (audioContext?.state === "suspended") { await audioContext?.resume(); } else { await audioContext?.suspend() } }} class="h-8 px-2 rounded-md hover:bg-zinc-500/50 active:translate-y-0.5 transition duration-100 ease-[ease] flex items-center justify-center">
-            <span class="text-zinc-50 text-xs font-mono select-none">Freeze</span>
+            <span class="text-zinc-50 text-xs font-mono select-none">Freeze / Resume</span>
         </button>
     </div>
 </div>

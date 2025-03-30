@@ -5,6 +5,15 @@
     let timeText = $state("");
     let updateIntervalID: number;
 
+    // Call update
+    onMount(() => {
+        updateTime();
+        updateIntervalID = setInterval(updateTime, 1000);
+    });
+    onDestroy(() => {
+        clearInterval(updateIntervalID);
+    });
+
     /** Update the displayed time in timer */
     function updateTime() {
         const now = new Date();
@@ -13,15 +22,6 @@
         const second = now.getSeconds() < 10 ? `0${now.getSeconds()}` : now.getSeconds();
         timeText = `${hour}:${minute}:${second}`;
     }
-
-    // Call update
-    onMount(() => {
-        updateTime();
-        updateIntervalID = setInterval(updateTime, 1000);
-    });
-    onDestroy(() => {
-        clearInterval(updateIntervalID);
-    })
 </script>
 
 <!-- Clock widget -->

@@ -6,7 +6,8 @@ export const DEFAULT_SETTINGS: UserSettings = {
     soundEffectsVolume: 1,
     hitsoundsVolume: 1,
     latency: 0,
-    fpsCounter: false
+    fpsCounter: false,
+    backgroundFlashEffect: true
 };
 
 /* Global states */
@@ -14,10 +15,9 @@ export const global: Global = $state({
     screen: "home",
     screenAnimationReverseDirection: false,
     openPanel: "none",
-    mainButtonElement: null,
-    backButtonElement: null,
     gameScreenStatus: "inactive",
     userSettings: DEFAULT_SETTINGS,
+    chosenLevel: "ez",
     musicPlayerData: {
         song: {
             name: "???",
@@ -35,7 +35,8 @@ export const global: Global = $state({
         logicalStartTime: 0,
         pauseTime: -1
     },
-    waitingCount: 1
+    waitingCount: 1,
+    debugMessage: "Rhythora Debug"
 });
 
 /* Global state setters */

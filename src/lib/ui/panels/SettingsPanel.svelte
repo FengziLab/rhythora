@@ -3,8 +3,8 @@
     import { fade, fly } from "svelte/transition";
     import { circOut, expoOut } from "svelte/easing";
     import Slider from "../misc/Slider.svelte";
-    import { global } from "$lib/system/global.svelte";
     import { fadeToMusicVolume, fadeToSoundEffectsVolume, fadeToHitsoundsVolume } from "$lib/system/audio-system";
+    import { global } from "$lib/system/global.svelte";
 
     // Listen for setting changes
     $effect(() => {
@@ -25,13 +25,9 @@
     $effect(() => {
         localStorage.setItem("userSettings.fpsCounter", global.userSettings.fpsCounter.toString());
     });
-
-    /** Event handler to escape the settings panel */
-    function escHandler(event: KeyboardEvent) {
-        if (event.key === "Escape") {
-            global.openPanel = "none";
-        }
-    }
+    $effect(() => {
+        localStorage.setItem("userSettings.backgroundFlashEffect", global.userSettings.backgroundFlashEffect.toString());
+    });
 
     // When panel is open
     onMount(() => {
@@ -40,6 +36,13 @@
     onDestroy(() => {
         window.removeEventListener("keydown", escHandler);
     });
+
+    /** Event handler to escape the settings panel */
+    function escHandler(event: KeyboardEvent) {
+        if (event.key === "Escape") {
+            global.openPanel = "none";
+        }
+    }
 </script>
 
 <!-- Background shade -->
@@ -48,7 +51,7 @@
 <div onclick={() => {global.openPanel = "none"}} aria-label="Exit" transition:fade={{ duration: 300, easing: circOut }} class="absolute inset-0 w-full h-full bg-black/50"></div>
 
 <!-- Settings panel -->
-<div transition:fly={{ duration: 500, easing: expoOut, x: -400, opacity: 1 }} class="absolute left-0 inset-y-0 w-100 h-full p-8 rounded-r-3xl bg-zinc-900/90 backdrop-blur-xl border-r-1 border-zinc-800 overflow-y-auto scheme-only-dark">
+<div transition:fly={{ duration: 500, easing: expoOut, x: -400, opacity: 1 }} class="absolute left-0 inset-y-0 w-100 h-full p-8 rounded-r-3xl bg-zinc-900/80 backdrop-blur-xl border-r-1 border-zinc-800 overflow-y-auto scheme-only-dark">
     <!-- Title -->
     <h1 class="mt-10 text-zinc-50 text-2xl font-comfortaa font-medium tracking-wide select-none">Settings</h1>
 
@@ -81,13 +84,17 @@
         </div> -->
         <div class="mt-4 w-full flex flex-row flex-nowrap gap-0 items-center justify-between">
             <p class="text-zinc-50 font-comfortaa tracking-wide select-none">In-game FPS Counter</p>
-            <input type="button" onclick={() => { global.userSettings.fpsCounter = !global.userSettings.fpsCounter }} title={global.userSettings.fpsCounter === true ? "Enabled" : "Disabled"} class="w-14 h-6 rounded-full { global.userSettings.fpsCounter === true ? "bg-fuchsia-700" : "bg-fuchsia-700/10" } border-2 border-fuchsia-700 hover:shadow-lg shadow-fuchsia-700/30 active:translate-y-0.5 transition duration-100 ease-circ-out zinc-3" />
+            <input type="button" onclick={() => { global.userSettings.fpsCounter = !global.userSettings.fpsCounter }} title={global.userSettings.fpsCounter === true ? "Enabled" : "Disabled"} class="w-14 h-6 rounded-full { global.userSettings.fpsCounter === true ? "bg-fuchsia-700" : "bg-fuchsia-700/10" } border-2 border-fuchsia-700 hover:shadow-lg shadow-fuchsia-700/30 active:translate-y-0.5 transition duration-100 ease-circ-out" />
+        </div>
+        <div class="w-full flex flex-row flex-nowrap gap-0 items-center justify-between">
+            <p class="text-zinc-50 font-comfortaa tracking-wide select-none">Background Flash Effect</p>
+            <input type="button" onclick={() => { global.userSettings.backgroundFlashEffect = !global.userSettings.backgroundFlashEffect }} title={global.userSettings.backgroundFlashEffect === true ? "Enabled" : "Disabled"} class="w-14 h-6 rounded-full { global.userSettings.backgroundFlashEffect === true ? "bg-fuchsia-700" : "bg-fuchsia-700/10" } border-2 border-fuchsia-700 hover:shadow-lg shadow-fuchsia-700/30 active:translate-y-0.5 transition duration-100 ease-circ-out" />
         </div>
     </div>
 
     <!-- Info -->
     <div class="mt-16 flex flex-col flex-nowrap gap-0">
-        <p class="text-center text-zinc-500 text-sm font-comfortaa select-none">Rhythora Beta 20250322</p>
+        <p class="text-center text-zinc-500 text-sm font-comfortaa select-none">Rhythora Beta 20250329</p>
         <p class="text-center text-zinc-500 text-sm font-comfortaa select-none">A <a href="https://fengzi.dev/" target="_blank" rel="noreferrer" class="hover:text-zinc-400 transition transition-100 ease-circ-out">Fengzi Lab</a> project</p>
     </div>
 </div>
