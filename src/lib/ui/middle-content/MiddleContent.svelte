@@ -3,6 +3,7 @@
     import SongSelectScreen from "./screens/SongSelectScreen.svelte";
     import GameScreen from "./screens/GameScreen.svelte";
     import EditorScreen from "./screens/EditorScreen.svelte";
+    import CalibrationScreen from "./screens/CalibrationScreen.svelte";
     import { global } from "$lib/system/global.svelte";
 </script>
 
@@ -12,12 +13,12 @@
     {#if global.screen === "home"}
     <HomeScreen />
     {:else if global.screen === "song-select"}
-    <!-- TODO -->
     <SongSelectScreen />
     {:else if global.screen === "game"}
-    <!-- TODO -->
     <GameScreen />
     {:else if global.screen === "editor"}
     <EditorScreen />
+    {:else if global.screen === "calibration"}
+    <CalibrationScreen />
     {/if}
 </div>

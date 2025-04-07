@@ -1,3 +1,34 @@
+export interface Global {
+    userSettings: UserSettings,
+    musicPlayerData: MusicPlayerData,
+    notifications: Notification[],
+    waitingCount: number,
+    openPanel: OpenPanel,
+    screen: Screen,
+    screenTransitionMode: ScreenTransitionMode,
+    returnScreen: Screen | null,
+    gameScreenStatus: GameScreenStatus,
+    debugMessage: string
+}
+
+export interface UserSettings {
+    musicVolume: number,
+    soundEffectsVolume: number,
+    hitsoundsVolume: number,
+    audioDisplacementMs: number,
+    inputDisplacementMs: number,
+    fpsCounter: boolean,
+    backgroundFlashEffect: boolean,
+    chosenLevel: Level
+}
+
+export interface MusicPlayerData {
+    song: MusicData,
+    isPlaying: boolean,
+    logicalStartTime: number,
+    pauseTime: number
+}
+
 export interface MusicData {
     name: string,
     author: string,
@@ -11,24 +42,30 @@ export interface MusicData {
     offset: number
 }
 
-export interface MusicPlayerData {
-    song: MusicData,
-    isPlaying: boolean,
-    logicalStartTime: number,
-    pauseTime: number
+export interface Notification {
+    id: number,
+    type: NotificationType,
+    content: string,
+    isRead: boolean
 }
 
-export type NoteType = "tap" | "hold" | "stay";
+export type NotificationType = "update" | "other";
 
-export interface PointPosition {
-    row: 1 | 2 | 3,
-    xPos: number
-}
+export type OpenPanel = "none" | "settings" | "notifications";
 
-export interface LongPosition {
-    row: 1 | 2 | 3,
-    startXPos: number,
-    endXPos: number
+export type Screen = "home" | "song-select" | "game" | "editor" | "calibration";
+
+export type ScreenTransitionMode = "to-left" | "fade" | "to-right";
+
+export type Level = "ez" | "hd" | "in";
+
+export type GameScreenStatus = "inactive" | "loading" | "before-game" | "in-game" | "ending";
+
+/* ------------------------------ */
+
+export interface Chart {
+    metadata: MusicData,
+    notes: Note[]
 }
 
 export type Note = {
@@ -46,7 +83,20 @@ export type Note = {
     position: PointPosition
 }
 
-export type HitAccuracyRating = "standby" | "perfect" | "early" | "late" | "miss";
+export type NoteType = "tap" | "hold" | "stay";
+
+export interface PointPosition {
+    row: 1 | 2 | 3,
+    xPos: number
+}
+
+export interface LongPosition {
+    row: 1 | 2 | 3,
+    startXPos: number,
+    endXPos: number
+}
+
+export type GameNote = Note & GameNoteExtension;
 
 type GameNoteExtension = {
     isSyncNote: boolean,
@@ -54,40 +104,4 @@ type GameNoteExtension = {
     hitAccuracyRating: HitAccuracyRating
 }
 
-export type GameNote = Note & GameNoteExtension;
-
-export interface Chart {
-    metadata: MusicData,
-    notes: Note[]
-}
-
-
-
-export type Screen = "home" | "song-select" | "game" | "editor";
-
-export type OpenPanel = "none" | "settings" | "notifications";
-
-export type GameScreenStatus = "inactive" | "loading" | "before-game" | "in-game" | "ending";
-
-export interface UserSettings {
-    musicVolume: number,
-    soundEffectsVolume: number,
-    hitsoundsVolume: number,
-    latency: number,
-    fpsCounter: boolean,
-    backgroundFlashEffect: boolean
-}
-
-export type Level = "ez" | "hd" | "in";
-
-export interface Global {
-    screen: Screen,
-    screenAnimationReverseDirection: boolean,
-    openPanel: OpenPanel,
-    gameScreenStatus: GameScreenStatus,
-    userSettings: UserSettings,
-    chosenLevel: Level,
-    musicPlayerData: MusicPlayerData,
-    waitingCount: number,
-    debugMessage: string
-}
+export type HitAccuracyRating = "standby" | "perfect" | "early" | "late" | "miss";

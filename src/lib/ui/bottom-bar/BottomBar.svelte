@@ -21,11 +21,11 @@
     <div bind:offsetWidth={contentWidth} class="row-start-1 col-start-1 w-fit h-26 mx-auto px-4 grid">
         <!-- Left button group -->
         {#if global.screen === "home"}
-        <div in:fly={{ duration: 300, easing: circOut, x: global.screenAnimationReverseDirection ? -100 : 100 }} class="row-start-1 col-start-1 flex flex-row flex-nowrap gap-4 items-center justify-start">
+        <div in:fly={{ duration: 300, easing: circOut, x: global.screenTransitionMode === "to-left" ? -100 : 100 }} class="row-start-1 col-start-1 flex flex-row flex-nowrap gap-4 items-center justify-start">
             <HomeLeftButtonGroup />
         </div>
         {:else if global.screen === "song-select"}
-        <div in:fly={{ duration: 300, easing: circOut, x: global.screenAnimationReverseDirection ? -100 : 100 }} class="row-start-1 col-start-1 flex flex-row flex-nowrap gap-4 items-center justify-start">
+        <div in:fly={{ duration: 300, easing: circOut, x: global.screenTransitionMode === "to-left" ? -100 : 100 }} class="row-start-1 col-start-1 flex flex-row flex-nowrap gap-4 items-center justify-start">
             <SongSelectLeftButtonGroup />
         </div>
         {/if}
@@ -37,11 +37,11 @@
 
         <!-- Right button group -->
         {#if global.screen === "home"}
-        <div in:fly={{ duration: 300, easing: circOut, x: global.screenAnimationReverseDirection ? 100 : -100 }} class="row-start-1 col-start-3 flex flex-row flex-nowrap gap-4 items-center justify-end">
+        <div in:fly={{ duration: 300, easing: circOut, x: global.screenTransitionMode === "to-left" ? 100 : -100 }} class="row-start-1 col-start-3 flex flex-row flex-nowrap gap-4 items-center justify-end">
             <HomeRightButtonGroup />
         </div>
         {:else if global.screen === "song-select"}
-        <div in:fly={{ duration: 300, easing: circOut, x: global.screenAnimationReverseDirection ? 100 : -100 }} class="row-start-1 col-start-3 flex flex-row flex-nowrap gap-4 items-center justify-end">
+        <div in:fly={{ duration: 300, easing: circOut, x: global.screenTransitionMode === "to-left" ? 100 : -100 }} class="row-start-1 col-start-3 flex flex-row flex-nowrap gap-4 items-center justify-end">
             <SongSelectRightButtonGroup />
         </div>
         {/if}

@@ -3,31 +3,7 @@
     import { fade, fly } from "svelte/transition";
     import { circOut, expoOut } from "svelte/easing";
     import Slider from "../misc/Slider.svelte";
-    import { fadeToMusicVolume, fadeToSoundEffectsVolume, fadeToHitsoundsVolume } from "$lib/system/audio-system";
-    import { global } from "$lib/system/global.svelte";
-
-    // Listen for setting changes
-    $effect(() => {
-        fadeToMusicVolume(global.userSettings.musicVolume, 0);
-        localStorage.setItem("userSettings.musicVolume", global.userSettings.musicVolume.toString());
-    });
-    $effect(() => {
-        fadeToSoundEffectsVolume(global.userSettings.soundEffectsVolume, 0);
-        localStorage.setItem("userSettings.soundEffectsVolume", global.userSettings.soundEffectsVolume.toString());
-    });
-    $effect(() => {
-        fadeToHitsoundsVolume(global.userSettings.hitsoundsVolume, 0);
-        localStorage.setItem("userSettings.hitsoundsVolume", global.userSettings.hitsoundsVolume.toString());
-    });
-    $effect(() => {
-        localStorage.setItem("userSettings.latency", global.userSettings.latency.toString());
-    });
-    $effect(() => {
-        localStorage.setItem("userSettings.fpsCounter", global.userSettings.fpsCounter.toString());
-    });
-    $effect(() => {
-        localStorage.setItem("userSettings.backgroundFlashEffect", global.userSettings.backgroundFlashEffect.toString());
-    });
+    import { global, setScreen, setUserSetting } from "$lib/system/global.svelte";
 
     // When panel is open
     onMount(() => {
@@ -37,11 +13,18 @@
         window.removeEventListener("keydown", escHandler);
     });
 
-    /** Event handler to escape the settings panel */
+    /** (Close the settings panel if Esc) */
     function escHandler(event: KeyboardEvent) {
         if (event.key === "Escape") {
             global.openPanel = "none";
         }
+    }
+
+    /** (Switch calibration screen after setting return screen and close the panel) */
+    function calibrateLatencyHandler() {
+        global.returnScreen = global.screen;
+        setScreen("calibration", "fade");
+        global.openPanel = "none";
     }
 </script>
 
@@ -59,19 +42,19 @@
     <div class="mt-12 flex flex-col flex-nowrap gap-10">
         <div class="w-full flex flex-col flex-nowrap gap-2">
             <p class="text-zinc-50 font-comfortaa tracking-wide select-none">Music Volume (%)</p>
-            <Slider bind:value={global.userSettings.musicVolume} min={0} max={1} step={0.01} displayMultiplier={100} />
+            <Slider userSettingToUpdate="musicVolume" value={global.userSettings.musicVolume} min={0} max={1} step={0.01} displayMultiplier={100} />
         </div>
         <div class="w-full flex flex-col flex-nowrap gap-2">
             <p class="text-zinc-50 font-comfortaa tracking-wide select-none">Sound Effects Volume (%)</p>
-            <Slider bind:value={global.userSettings.soundEffectsVolume} min={0} max={1} step={0.01} displayMultiplier={100} />
+            <Slider userSettingToUpdate="soundEffectsVolume" value={global.userSettings.soundEffectsVolume} min={0} max={1} step={0.01} displayMultiplier={100} />
         </div>
         <div class="w-full flex flex-col flex-nowrap gap-2">
             <p class="text-zinc-50 font-comfortaa tracking-wide select-none">Hitsounds Volume (%)</p>
-            <Slider bind:value={global.userSettings.hitsoundsVolume} min={0} max={1} step={0.01} displayMultiplier={100} />
+            <Slider userSettingToUpdate="hitsoundsVolume" value={global.userSettings.hitsoundsVolume} min={0} max={1} step={0.01} displayMultiplier={100} />
         </div>
         <div class="w-full flex flex-col flex-nowrap gap-2">
-            <p class="text-zinc-50 font-comfortaa tracking-wide select-none">Latency (ms)</p>
-            <Slider bind:value={global.userSettings.latency} min={0} max={500} step={1} />
+            <p class="text-zinc-50 font-comfortaa tracking-wide select-none">Latency</p>
+            <button onclick={calibrateLatencyHandler} class="w-full h-12 rounded-full bg-fuchsia-800 hover:brightness-115 active:translate-y-1 transition duration-150 ease-circ-out text-zinc-50 font-poppins tracking-wide select-none">Calibrate Latency</button>
         </div>
         <!-- <div class="w-full flex flex-col flex-nowrap gap-2">
             <p class="text-zinc-50 font-comfortaa tracking-wide select-none">Auto Fullscreen</p>
@@ -84,17 +67,17 @@
         </div> -->
         <div class="mt-4 w-full flex flex-row flex-nowrap gap-0 items-center justify-between">
             <p class="text-zinc-50 font-comfortaa tracking-wide select-none">In-game FPS Counter</p>
-            <input type="button" onclick={() => { global.userSettings.fpsCounter = !global.userSettings.fpsCounter }} title={global.userSettings.fpsCounter === true ? "Enabled" : "Disabled"} class="w-14 h-6 rounded-full { global.userSettings.fpsCounter === true ? "bg-fuchsia-700" : "bg-fuchsia-700/10" } border-2 border-fuchsia-700 hover:shadow-lg shadow-fuchsia-700/30 active:translate-y-0.5 transition duration-100 ease-circ-out" />
+            <input type="button" onclick={() => { setUserSetting("fpsCounter", !global.userSettings.fpsCounter, true) }} title={global.userSettings.fpsCounter === true ? "Enabled" : "Disabled"} class="w-14 h-6 rounded-full { global.userSettings.fpsCounter === true ? "bg-fuchsia-700" : "bg-fuchsia-700/10" } border-2 border-fuchsia-700 hover:shadow-lg shadow-fuchsia-700/30 active:translate-y-0.5 transition duration-100 ease-circ-out" />
         </div>
         <div class="w-full flex flex-row flex-nowrap gap-0 items-center justify-between">
             <p class="text-zinc-50 font-comfortaa tracking-wide select-none">Background Flash Effect</p>
-            <input type="button" onclick={() => { global.userSettings.backgroundFlashEffect = !global.userSettings.backgroundFlashEffect }} title={global.userSettings.backgroundFlashEffect === true ? "Enabled" : "Disabled"} class="w-14 h-6 rounded-full { global.userSettings.backgroundFlashEffect === true ? "bg-fuchsia-700" : "bg-fuchsia-700/10" } border-2 border-fuchsia-700 hover:shadow-lg shadow-fuchsia-700/30 active:translate-y-0.5 transition duration-100 ease-circ-out" />
+            <input type="button" onclick={() => { setUserSetting("backgroundFlashEffect", !global.userSettings.backgroundFlashEffect, true) }} title={global.userSettings.backgroundFlashEffect === true ? "Enabled" : "Disabled"} class="w-14 h-6 rounded-full { global.userSettings.backgroundFlashEffect === true ? "bg-fuchsia-700" : "bg-fuchsia-700/10" } border-2 border-fuchsia-700 hover:shadow-lg shadow-fuchsia-700/30 active:translate-y-0.5 transition duration-100 ease-circ-out" />
         </div>
     </div>
 
     <!-- Info -->
     <div class="mt-16 flex flex-col flex-nowrap gap-0">
-        <p class="text-center text-zinc-500 text-sm font-comfortaa select-none">Rhythora Beta 20250329</p>
+        <p class="text-center text-zinc-500 text-sm font-comfortaa select-none">Rhythora Beta 20250406</p>
         <p class="text-center text-zinc-500 text-sm font-comfortaa select-none">A <a href="https://fengzi.dev/" target="_blank" rel="noreferrer" class="hover:text-zinc-400 transition transition-100 ease-circ-out">Fengzi Lab</a> project</p>
     </div>
 </div>

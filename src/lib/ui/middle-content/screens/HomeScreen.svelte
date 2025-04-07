@@ -2,13 +2,14 @@
     import { fly } from "svelte/transition";
     import { circOut } from "svelte/easing";
     import { global } from "$lib/system/global.svelte";
+    import { getScreenTransitionX } from "$lib/system/helpers";
 
     // Local states
-    let isToFromRight = $derived((global.screen === "home") === global.screenAnimationReverseDirection);
+    let screenTransitionX = $derived(getScreenTransitionX("home", global.screen, global.screenTransitionMode, 100));
 </script>
 
 <!-- Home screen content box -->
-<div transition:fly={{ duration: 300, easing: circOut, x: isToFromRight ? -100 : 100 }} class="row-start-1 col-start-1 w-[75%] max-padh:w-[85%] max-padv:w-full max-w-600 h-full mx-auto p-16 flex flex-row flex-nowrap gap-8">
+<div transition:fly={{ duration: 300, easing: circOut, x: screenTransitionX }} class="row-start-1 col-start-1 w-[75%] max-padh:w-[85%] max-padv:w-full max-w-600 h-full mx-auto p-16 flex flex-row flex-nowrap gap-8">
 
     <!-- News content -->
     <div class="w-full h-full rounded-xl bg-zinc-700/30 border-b-2 border-zinc-700/30 overflow-clip">

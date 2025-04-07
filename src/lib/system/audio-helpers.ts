@@ -180,7 +180,7 @@ export async function playRandomBackgroundMusic(fadeSeconds = -1) {
     await loadNewMusicFromLink(music.audioLink, true, fadeSeconds, fadeSeconds);
 }
 
-/** Pause the music */
+/** Pause the music and take care of global music player data */
 export function pauseMusic(fadeOutSeconds = -1): boolean {
     if (audioContext === null) return false;
     const currentTime = audioContext.currentTime;
@@ -192,7 +192,7 @@ export function pauseMusic(fadeOutSeconds = -1): boolean {
     return false;
 }
 
-/** Resume the music */
+/** Resume the music and take care of global music player data */
 export function resumeMusic(fadeInSeconds = -1): boolean {
     if (loadMusicSource(null, false, fadeInSeconds) === true) {
         musicSource!.start(0, global.musicPlayerData.pauseTime); // NOTE: guaranteed musicSource so make ts happy

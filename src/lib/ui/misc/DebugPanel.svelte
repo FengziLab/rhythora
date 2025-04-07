@@ -34,12 +34,13 @@
         `;
         displayTextCol2 = `
             [UI] <br/>
-            screen: ${global.screen} <br/>
-            reverseDirection: ${global.screenAnimationReverseDirection} <br/>
-            openPanel: ${global.openPanel} <br/>
-            gameScreenStatus: ${global.gameScreenStatus} <br/>
-            chosenLevel: ${global.chosenLevel} <br/>
+            chosenLevel: ${global.userSettings.chosenLevel} <br/>
             waitingCount: ${global.waitingCount} <br/>
+            openPanel: ${global.openPanel} <br/>
+            screen: ${global.screen} <br/>
+            transitionMode: ${global.screenTransitionMode} <br/>
+            returnScreen: ${global.returnScreen} <br/>
+            gameScreenStatus: ${global.gameScreenStatus} <br/>
             activeElement: ${document?.activeElement?.tagName} <br/>
         `;
     }

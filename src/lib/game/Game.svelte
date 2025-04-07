@@ -2,10 +2,10 @@
     import { onMount, onDestroy } from "svelte";
     import { fade, fly } from "svelte/transition";
     import { circOut } from "svelte/easing";
-    import { audioContext, loadMusicSource, musicSource } from "$lib/system/audio-system";
+    import { audioContext, musicSource, loadMusicSource } from "$lib/system/audio-system";
     import { pauseMusic, resumeMusic } from "$lib/system/audio-helpers";
     import { global, setScreen } from "$lib/system/global.svelte";
-    import { sleep } from "$lib/system/helpers";
+    import { impreciseSleep } from "$lib/system/helpers";
     import type { Note, GameNote } from "$lib/system/types";
 
     // Canvas and local states
@@ -15,8 +15,8 @@
     let canvasHeight = $state(150);
     let noteDiameter = $derived(Math.floor(Math.min(canvasWidth / 10, canvasHeight / 6)));
     let noteRadius = $derived(noteDiameter / 2);
-    let canvasXOffset = $derived((canvasWidth - (noteDiameter * 10)) / 2);
-    let canvasYOffset = $derived((canvasHeight - (noteDiameter * 6)) / 2);
+    let noteAreaXOffset = $derived((canvasWidth - (noteDiameter * 10)) / 2);
+    let noteAreaYOffset = $derived((canvasHeight - (noteDiameter * 6)) / 2);
     let isPausedOverlayShown = $state(false);
 
     const NOTE_BEFORE_SECONDS = 0.8;
@@ -139,7 +139,7 @@
         canvasCtx.clearRect(0, 0, canvasWidth, canvasHeight);
 
         // Draw progress bar
-        const gameTime = audioContext!.currentTime - global.musicPlayerData.logicalStartTime - (global.userSettings.latency / 1000); // NOTE: guaranteed audioContext so make ts happy
+        const gameTime = audioContext!.currentTime - global.musicPlayerData.logicalStartTime - (global.userSettings.audioDisplacementMs / 1000); // NOTE: guaranteed audioContext so make ts happy
         canvasCtx.fillStyle = "#d4d4d8"; // zinc-300 (hex)
         canvasCtx.globalAlpha = 1;
         canvasCtx.fillRect(0, canvasHeight - 5, gameTime / global.musicPlayerData.song.length * canvasWidth, 5);
@@ -165,8 +165,8 @@
         for (let i = onScreenNotes.length - 1; i >= 0; i--) {
             const note = onScreenNotes[i]; // temp: ts
             if (note.type === "tap") {
-                const centerX = note.position.xPos * noteDiameter + noteRadius + canvasXOffset;
-                const centerY = note.position.row * noteDiameter + noteRadius + canvasYOffset;
+                const centerX = note.position.xPos * noteDiameter + noteRadius + noteAreaXOffset;
+                const centerY = note.position.row * noteDiameter + noteRadius + noteAreaYOffset;
 
                 // Circle
                 canvasCtx.fillStyle = note.hitAt === -1 ? "#7823c2" : "#226622";
@@ -214,7 +214,7 @@
 
     /* ------------------------------ Input ------------------------------ */
 
-    /** Event handler for keyboard game input */
+    /** (Route keydowns to game input, toggle pause if Esc, and prevent certain meta keys from interrupting game input) */
     function keydownHandler(event: KeyboardEvent) {
         // Game keys
         if (event.repeat === false) {
@@ -269,7 +269,7 @@
         }
     }
 
-    /** Handle game input (TODO) */
+    /** Handle game input (TODO) (TODO: only for keydown) */
     function gameInput(row: number) {
         if (audioContext === null) return;
 
@@ -283,14 +283,14 @@
         }
     }
 
-    /** Handle exiting the game */
+    /** Fade out for 1 second and switch to Song Select screen */
     async function exit() {
         isPausedOverlayShown = false;
         global.gameScreenStatus = "before-game";
-        await sleep(1000);
-        setScreen("song-select", true);
+        await impreciseSleep(1000);
+        setScreen("song-select", "to-left");
     }
-    /** Handle restarting the game */
+    /** Reset on-screen notes, combo, accuracy, and reload music to restart (TODO: reconvert game chart maybe) */
     function restart() {
         onScreenNotes = [];
         onScreenNotesSeekIndex = 0;
@@ -301,7 +301,7 @@
             canStart();
         }
     }
-    /** Handle toggling pause */
+    /** Toggle game and audio pausing (TODO: use animate and audio locks maybe) */
     function togglePause() {
         if (isPausedOverlayShown === false && audioContext!.currentTime > global.musicPlayerData.logicalStartTime) { // NOTE: will return false anyway so make ts happy
             pauseMusic(-1);
@@ -315,7 +315,7 @@
 </script>
 
 <!-- Game canvas -->
-<canvas bind:this={canvasElement} bind:clientWidth={canvasWidth} bind:clientHeight={canvasHeight} width={canvasWidth} height={canvasHeight}  class="w-full h-full"></canvas>
+<canvas bind:this={canvasElement} bind:clientWidth={canvasWidth} bind:clientHeight={canvasHeight} width={canvasWidth} height={canvasHeight} class="w-full h-full"></canvas>
 
 <!-- Pause button -->
 <button onclick={togglePause} title="Pause" aria-label="Pause" tabindex="-1" class="absolute left-0 top-0 group size-24 max-padh:size-16 outline-none flex items-center justify-center"> <!-- NOTE: add box-content if using padding to control offset -->

@@ -5,7 +5,7 @@
     import Game from "$lib/game/Game.svelte";
     import { loadNewMusicFromLink, BACKGROUND_MUSIC_LIST } from "$lib/system/audio-helpers";
     import { global } from "$lib/system/global.svelte";
-    import { sleep } from "$lib/system/helpers";
+    import { impreciseSleep } from "$lib/system/helpers";
 
     // Local states
     let gameElement: Game;
@@ -15,16 +15,16 @@
         // Fade in loading info and load resources, wait finish && [1500]-2000ms: loading info animation attack + sustain done
         global.gameScreenStatus = "loading";
         global.musicPlayerData.song = BACKGROUND_MUSIC_LIST[4]; // TODO: temporary
-        await Promise.all([loadNewMusicFromLink(global.musicPlayerData.song.audioLink, false, 1.5, -1), sleep(1500)]);
+        await Promise.all([loadNewMusicFromLink(global.musicPlayerData.song.audioLink, false, 1.5, -1), impreciseSleep(1500)]);
 
         // Fade out loading info, wait [500]-1000ms: loading info animation release done
         global.gameScreenStatus = "before-game";
         // TODO: fade in song cover/background
-        await sleep(500);
+        await impreciseSleep(500);
 
         // Fade in main game area, wait [500]-1000ms: main game area attack done
         global.gameScreenStatus = "in-game";
-        // await sleep(500);
+        await impreciseSleep(500);
 
         // Start game
         gameElement.canStart();

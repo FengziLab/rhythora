@@ -1,6 +1,9 @@
 <script lang="ts">
-    let { value = $bindable(-1), min, max, step, displayMultiplier = 1 }: {
-        value: number,
+    import { setUserSetting } from "$lib/system/global.svelte";
+    import type { UserSettings } from "$lib/system/types";
+    let { userSettingToUpdate, value, min, max, step, displayMultiplier = 1 }: {
+        userSettingToUpdate: keyof UserSettings | null,
+        value: number, // NOTE: value updates when changes come from outside, but is safe changing within the scope
         min: number,
         max: number,
         step: number,
@@ -8,29 +11,45 @@
     } = $props();
 
     // Local states
-    let displayValue: string = $state(Math.round(value * displayMultiplier).toString());
+    let textValue: string = $derived(Math.round(value * displayMultiplier).toString()); // NOTE: temporarily updatable in optimistic UI
 
-    // Two-way update between value state and displayed precise value input
-    $effect(() => {
-        displayValue = displayValue.replace(/\D/g, "");
-        let displayNumValue = Number(displayValue) ?? 0;
-        if (displayNumValue > max * displayMultiplier) {
-            displayValue = (max * displayMultiplier).toString();
-            return;
-        } else if (displayNumValue < min * displayMultiplier) {
-            displayValue = (min * displayMultiplier).toString();
-            return;
+    /** (Save to settings) */
+    function rangeChangeHandler() {
+        if (userSettingToUpdate !== null) {
+            setUserSetting(userSettingToUpdate, value, true);
         }
-        value = displayNumValue / displayMultiplier;
-    });
-    $effect(() => {
-        displayValue = Math.round(value * displayMultiplier).toString();
-    });
+    }
+
+    /** (Validate input, change main value and save to settings) */
+    function textChangeHandler() {
+        // Filter non-numeric characters (override optimistic UI from input binding in case no derived value update)
+        textValue = textValue.replace(/\D/g, "");
+
+        // Cast to number for processing
+        let textNumValue = Number(textValue) ?? 0;
+
+        // Check against min/max limits (override optimistic UI from input binding in case no derived value update)
+        if (textNumValue > max * displayMultiplier) {
+            textNumValue = max * displayMultiplier;
+            textValue = textNumValue.toString();
+        } else if (textNumValue < min * displayMultiplier) {
+            textNumValue = min * displayMultiplier;
+            textValue = textNumValue.toString();
+        }
+
+        // Update main value
+        value = textNumValue / displayMultiplier;
+
+        // Save to settings
+        if (userSettingToUpdate !== null) {
+            setUserSetting(userSettingToUpdate, value, true);
+        }
+    }
 </script>
 
 <div class="flex flex-row flex-nowrap gap-3 items-center justify-start">
-    <input type="range" bind:value {min} {max} {step} title={Math.round(value * displayMultiplier).toString()} class="w-full h-8 rounded-lg appearance-none slider" style="--position: calc({(value / max) * 100 + "%"} + (({value / max}) - 0.5) * -1 * 0.625rem);">
-    <input type="text" bind:value={displayValue} maxlength={Math.round(max * displayMultiplier).toString().length} pattern="\d*" inputmode="numeric" spellcheck="false" autocomplete="off" autocorrect="off" class="w-10 h-8 border-b-2 border-transparent focus:border-fuchsia-300 outline-0 translate-y-px transition duration-150 ease-circ-out text-center text-zinc-50 font-comfortaa">
+    <input oninput={rangeChangeHandler} type="range" bind:value {min} {max} {step} title={Math.round(value * displayMultiplier).toString()} class="w-full h-8 rounded-lg appearance-none slider" style="--position: calc({(value / max) * 100 + "%"} + (({value / max}) - 0.5) * -1 * 0.625rem);">
+    <input oninput={textChangeHandler} type="text" bind:value={textValue} maxlength={Math.round(max * displayMultiplier).toString().length} pattern="\d*" inputmode="numeric" spellcheck="false" autocomplete="off" autocorrect="off" class="w-10 h-8 border-b-2 border-transparent focus:border-fuchsia-300 outline-0 translate-y-px transition duration-150 ease-circ-out text-center text-zinc-50 font-comfortaa">
 </div>
 
 <style>

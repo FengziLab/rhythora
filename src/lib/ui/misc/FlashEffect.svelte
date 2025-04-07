@@ -6,6 +6,7 @@
 
     // Local states
     let enabled = $derived(global.userSettings.backgroundFlashEffect === true && (global.screen === "home" || global.screen === "song-select") && global.musicPlayerData.isPlaying === true);
+    let animateLoopLock = false;
     let beatSeconds: number;
     let flashOpacityLeft = $state(0);
     let flashOpacityRight = $state(0);
@@ -27,8 +28,9 @@
 
     // Start the animation
     $effect(() => {
-        if (enabled === true) {
+        if (enabled === true && animateLoopLock === false) {
             frequencyAmplitudeArray = new Uint8Array(analyserNode!.frequencyBinCount); // NOTE: guaranteed analyserNode so make ts happy
+            animateLoopLock = true;
             requestAnimationFrame(animate);
         }
     });
@@ -53,14 +55,18 @@
         }
 
         // Go on to next frame
-        if (enabled === true) requestAnimationFrame(animate);
+        if (enabled === true) {
+            requestAnimationFrame(animate);
+        } else {
+            animateLoopLock = false;
+        }
     }
 </script>
 
 <!-- Background music flashing effect (TODO) -->
 {#if enabled === true}
-<div transition:fade={{ duration: 300, easing: circOut }} class="-z-10 absolute left-0 top-0 inset-0 {enabled === true ? "opacity-100" : "opacity-0"} transition duration-300 ease-circ-out pointer-events-none">
-    <div style="opacity: {flashOpacityLeft};" class="absolute left-0 inset-y-0 w-40 h-full bg-gradient-to-r from-zinc-500/50 to-transparent"></div>
-    <div style="opacity: {flashOpacityRight};" class="absolute right-0 inset-y-0 w-40 h-full bg-gradient-to-l from-zinc-500/50 to-transparent"></div>
+<div transition:fade={{ duration: 300, easing: circOut }} class="absolute inset-0 {enabled === true ? "opacity-100" : "opacity-0"} transition duration-300 ease-circ-out pointer-events-none">
+    <div style="opacity: {flashOpacityLeft};" class="absolute left-0 inset-y-0 w-52 max-pc:w-40 h-full bg-gradient-to-r from-zinc-500/50 to-transparent"></div>
+    <div style="opacity: {flashOpacityRight};" class="absolute right-0 inset-y-0 w-52 max-pc:w-40 h-full bg-gradient-to-l from-zinc-500/50 to-transparent"></div>
 </div>
 {/if}

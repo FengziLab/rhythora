@@ -1,15 +1,14 @@
 <script lang="ts">
-    import { global, setScreen } from "$lib/system/global.svelte";
+    import { global, setUserSetting, setScreen } from "$lib/system/global.svelte";
     import type { Level } from "$lib/system/types";
 
     // Local states
     let levelSelectedBackgroundStyles = $state("");
 
     // Apply the styles and react to changes
-    changeStyles(global.chosenLevel);
+    changeStyles(global.userSettings.chosenLevel);
     $effect(() => {
-        changeStyles(global.chosenLevel);
-        localStorage.setItem("chosenLevel", global.chosenLevel);
+        changeStyles(global.userSettings.chosenLevel);
     });
 
     /** Change position and color of background tile */
@@ -35,20 +34,20 @@
 
     <!-- Option buttons -->
     <div class="row-start-1 col-start-1 flex flex-row flex-nowrap gap-1.5">
-        <button onclick={() => { global.chosenLevel = "ez" }} class="w-20 h-18 rounded-xl active:translate-y-1 transition duration-200 ease-circ-out flex flex-col flex-nowrap gap-0 items-center justify-center">
-            <span class="text-gray-100 text-lg font-poppins leading-tight tracking-wide select-none">3</span>
-            <span class="text-gray-100 text-sm font-poppins leading-tight tracking-wide select-none">EZ</span>
+        <button onclick={() => { setUserSetting("chosenLevel", "ez", true) }} class="w-20 h-18 rounded-xl active:translate-y-1 transition duration-200 ease-circ-out flex flex-col flex-nowrap gap-0 items-center justify-center">
+            <span class="text-zinc-50 text-lg text-shadow-lg font-poppins leading-tight tracking-wide select-none">3</span>
+            <span class="text-zinc-50 text-sm text-shadow-lg font-poppins leading-tight tracking-wide select-none">EZ</span>
         </button>
-        <button onclick={() => { global.chosenLevel = "hd" }} class="w-20 h-18 rounded-xl active:translate-y-1 transition duration-200 ease-circ-out flex flex-col flex-nowrap gap-0 items-center justify-center">
-            <span class="text-gray-100 text-lg font-poppins leading-tight tracking-wide select-none">7</span>
-            <span class="text-gray-100 text-sm font-poppins leading-tight tracking-wide select-none">HD</span>
+        <button onclick={() => { setUserSetting("chosenLevel", "hd", true) }} class="w-20 h-18 rounded-xl active:translate-y-1 transition duration-200 ease-circ-out flex flex-col flex-nowrap gap-0 items-center justify-center">
+            <span class="text-zinc-50 text-lg text-shadow-lg font-poppins leading-tight tracking-wide select-none">7</span>
+            <span class="text-zinc-50 text-sm text-shadow-lg font-poppins leading-tight tracking-wide select-none">HD</span>
         </button>
-        <button onclick={() => { global.chosenLevel = "in" }} class="w-20 h-18 rounded-xl active:translate-y-1 transition duration-200 ease-circ-out flex flex-col flex-nowrap gap-0 items-center justify-center">
-            <span class="text-gray-100 text-lg font-poppins leading-tight tracking-wide select-none">11</span>
-            <span class="text-gray-100 text-sm font-poppins leading-tight tracking-wide select-none">IN</span>
+        <button onclick={() => { setUserSetting("chosenLevel", "in", true) }} class="w-20 h-18 rounded-xl active:translate-y-1 transition duration-200 ease-circ-out flex flex-col flex-nowrap gap-0 items-center justify-center">
+            <span class="text-zinc-50 text-lg text-shadow-lg font-poppins leading-tight tracking-wide select-none">11</span>
+            <span class="text-zinc-50 text-sm text-shadow-lg font-poppins leading-tight tracking-wide select-none">IN</span>
         </button>
     </div>
 </div>
 
 <!-- Start button -->
-<button onclick={() => { if (global.screen === "song-select") setScreen("game") }} class="w-44 h-18 rounded-xl bg-fuchsia-700 border-b-2 border-fuchsia-800 shadow-md shadow-fuchsia-800/30 hover:brightness-115 active:translate-y-1 transition duration-200 ease-circ-out text-gray-100 text-lg font-poppins tracking-wide select-none">Start!</button>
+<button onclick={() => { if (global.screen === "song-select") setScreen("game", "to-right") }} class="w-44 h-18 rounded-xl bg-fuchsia-700 border-b-2 border-fuchsia-800 shadow-md shadow-fuchsia-800/30 hover:brightness-115 active:translate-y-1 transition duration-200 ease-circ-out text-zinc-50 text-lg text-shadow-lg font-poppins tracking-wide select-none">Start!</button>

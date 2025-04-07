@@ -1,5 +1,5 @@
 <!-- Error page background -->
-<div class="absolute inset-0 w-full h-full bg-[url(/assets/background2.jpg)] bg-no-repeat bg-cover bg-center brightness-50"></div>
+<div class="absolute inset-0 w-full h-full bg-[url(/assets/backgrounds/background-0.jpg)] bg-no-repeat bg-cover bg-center brightness-60"></div>
 <div class="absolute inset-0 w-full h-full backdrop-blur-3xl transition duration-1000 ease-circ-out overflow-clip">
     <!-- Main content -->
     <div class="w-full h-full flex flex-col flex-nowrap gap-12 items-center justify-center">

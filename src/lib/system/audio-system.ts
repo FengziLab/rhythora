@@ -41,19 +41,19 @@ export function initializeAudioContext(): boolean {
 }
 
 /** Fade to a music volume over a set time */
-export function fadeToMusicVolume(value: number, seconds = 0): boolean {
+export function fadeToMusicVolume(value: number, seconds = -1): boolean {
     if (audioContext === null || musicVolumeNode === null) return false;
     musicVolumeNode.gain.linearRampToValueAtTime(value, audioContext.currentTime + Math.max(0, seconds));
     return true;
 } 
 /** Fade to a sound effects volume over a set time */
-export function fadeToSoundEffectsVolume(value: number, seconds = 0): boolean {
+export function fadeToSoundEffectsVolume(value: number, seconds = -1): boolean {
     if (audioContext === null || soundEffectsVolumeNode === null) return false;
     soundEffectsVolumeNode.gain.linearRampToValueAtTime(value, audioContext.currentTime + Math.max(0, seconds));
     return true;
 } 
 /** Fade to a hit sound volume over a set time */
-export function fadeToHitsoundsVolume(value: number, seconds = 0): boolean {
+export function fadeToHitsoundsVolume(value: number, seconds = -1): boolean {
     if (audioContext === null || hitsoundsVolumeNode === null) return false;
     hitsoundsVolumeNode.gain.linearRampToValueAtTime(value, audioContext.currentTime + Math.max(0, seconds));
     return true;
@@ -76,7 +76,7 @@ export function loadMusicSource(audioBuffer: AudioBuffer | null = null, play = f
         gain: fadeInSeconds >= 0 ? 0 : global.userSettings.musicVolume // set volume at 0 if time is set, or set straight to setting value
     });
     analyserNode = new AnalyserNode(audioContext, {
-        fftSize: 512
+        fftSize: 256
     });
     musicSource = new AudioBufferSourceNode(audioContext, {
         buffer: musicBuffer

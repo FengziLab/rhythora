@@ -1,23 +1,21 @@
-import type { Global, Screen, UserSettings } from "./types";
+import { fadeToMusicVolume, fadeToSoundEffectsVolume, fadeToHitsoundsVolume } from "./audio-system";
+import type { Global, UserSettings, Screen, ScreenTransitionMode } from "./types";
 
 /* Default settings */
 export const DEFAULT_SETTINGS: UserSettings = {
     musicVolume: 1,
     soundEffectsVolume: 1,
     hitsoundsVolume: 1,
-    latency: 0,
+    audioDisplacementMs: 0,
+    inputDisplacementMs: 0,
     fpsCounter: false,
-    backgroundFlashEffect: true
+    backgroundFlashEffect: true,
+    chosenLevel: "ez"
 };
 
 /* Global states */
 export const global: Global = $state({
-    screen: "home",
-    screenAnimationReverseDirection: false,
-    openPanel: "none",
-    gameScreenStatus: "inactive",
     userSettings: DEFAULT_SETTINGS,
-    chosenLevel: "ez",
     musicPlayerData: {
         song: {
             name: "???",
@@ -35,14 +33,73 @@ export const global: Global = $state({
         logicalStartTime: 0,
         pauseTime: -1
     },
+    notifications: [],
     waitingCount: 1,
+    openPanel: "none",
+    screen: "home",
+    screenTransitionMode: "fade",
+    returnScreen: null,
+    gameScreenStatus: "inactive",
     debugMessage: "Rhythora Debug"
 });
 
 /* Global state setters */
-export function setScreen(newScreen: Screen, reverseDirection = false) {
+/** Update a user setting and run necessary real-time side effects, including saving the settings to local storage (optional) */
+export function setUserSetting<UserSetting extends keyof UserSettings>(setting: UserSetting, newValue: UserSettings[UserSetting], save = true) {
+    // Save the new value
+    global.userSettings[setting] = newValue;
+
+    // Process specific side effects
+    switch (setting) {
+        case "musicVolume":
+            fadeToMusicVolume(newValue as number, -1); // NOTE: validated value type so make ts happy
+            break;
+        case "soundEffectsVolume":
+            fadeToSoundEffectsVolume(newValue as number, -1); // NOTE: validated value type so make ts happy
+            break;
+        case "hitsoundsVolume":
+            fadeToHitsoundsVolume(newValue as number, -1); // NOTE: validated value type so make ts happy
+            break;
+    }
+
+    // Save to local storage
+    if (save === true) {
+        localStorage.setItem("userSettings", JSON.stringify(global.userSettings));
+    }
+}
+
+/** Load valid stored user settings from user storage with fallback of current settings */
+export function loadUserSettings() {
+    // Read stored settings
+    const storedUserSettingsRaw = localStorage.getItem("userSettings");
+    if (storedUserSettingsRaw !== null) {
+        const storedUserSettings = JSON.parse(storedUserSettingsRaw);
+        const validStoredUserSettings: Partial<UserSettings> = {};
+
+        // Check for invalid setting items
+        for (const key in storedUserSettings) {
+            if (key in DEFAULT_SETTINGS) {
+                validStoredUserSettings[key as keyof UserSettings] = storedUserSettings[key]; // NOTE: validated key type so make ts happy
+            } else { // NOTE: future migrations can be added here
+                console.info(`Ignored loading unused setting: ${key}`);
+            }
+        }
+
+        // Apply settings with fallback of current settings (default on load)
+        global.userSettings = {
+            ...global.userSettings,
+            ...validStoredUserSettings
+        };
+    }
+}
+
+/** Switch to new screen using specified transition mode (with checks to set game screen status to inactive) */
+export function setScreen(newScreen: Screen, transitionMode: ScreenTransitionMode) {
+    // Set new screen
+    global.screenTransitionMode = transitionMode;
     global.screen = newScreen;
-    global.screenAnimationReverseDirection = reverseDirection;
+
+    // Check if game screen status should be inactive
     if (newScreen !== "game") {
         global.gameScreenStatus = "inactive";
     }

@@ -3,6 +3,7 @@
     import { circOut } from "svelte/easing";
     import SettingsWidget from "./widgets/SettingsWidget.svelte";
     import CreditsWidget from "./widgets/CreditsWidget.svelte";
+    import NotificationsWidget from "./widgets/NotificationsWidget.svelte";
     import AccountWidget from "./widgets/AccountWidget.svelte";
     import ClockWidget from "./widgets/ClockWidget.svelte";
     import NowPlayingWidget from "./widgets/NowPlayingWidget.svelte";
@@ -31,6 +32,8 @@
         <ClockWidget />
         <!-- Account widget -->
         <AccountWidget />
+        <!-- Notifications widget -->
+        <NotificationsWidget />
     </div>
 </div>
 {/if}
