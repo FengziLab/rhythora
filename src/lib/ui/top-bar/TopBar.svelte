@@ -14,7 +14,7 @@
 <!-- Top bar (set height) -->
 {#if global.screen === "home" || global.screen === "song-select"}
 <div transition:fly={{ duration: 300, easing: circOut, y: -64, opacity: 1 }} class="w-full p-2 h-16 rounded-b-xl bg-zinc-700/30 flex flex-row flex-nowrap gap-2 items-center justify-between">
-    <!-- Left button group -->
+    <!-- Left widget group -->
     <div class="h-full flex flex-row flex-nowrap gap-2 justify-start">
         <!-- Settings widget -->
         <SettingsWidget />
@@ -22,7 +22,7 @@
         <CreditsWidget />
     </div>
 
-    <!-- Right button group -->
+    <!-- Right widget group -->
     <div class="h-full flex flex-row flex-nowrap gap-2 items-center justify-end">
         <!-- Waiting widget -->
         <WaitingWidget />

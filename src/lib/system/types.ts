@@ -1,3 +1,9 @@
+export interface SoundBuffers {
+    [key: string]: AudioBuffer
+}
+
+/* ------------------------------ */
+
 export interface Global {
     userSettings: UserSettings,
     musicPlayerData: MusicPlayerData,
@@ -8,7 +14,9 @@ export interface Global {
     screenTransitionMode: ScreenTransitionMode,
     returnScreen: Screen | null,
     gameScreenStatus: GameScreenStatus,
-    debugMessage: string
+    isDebugPanelPassthroughEnabled: boolean,
+    debugMessage: string,
+    debugTriggerCount: number
 }
 
 export interface UserSettings {
@@ -60,6 +68,8 @@ export type ScreenTransitionMode = "to-left" | "fade" | "to-right";
 export type Level = "ez" | "hd" | "in";
 
 export type GameScreenStatus = "inactive" | "loading" | "before-game" | "in-game" | "ending";
+
+export type CalibrationStep = "audio-visual" | "input";
 
 /* ------------------------------ */
 

@@ -21,12 +21,12 @@
     }
 
     /** (Validate input, change main value and save to settings) */
-    function textChangeHandler() {
+    function textChangeHandler() { // NOTE: code reused at CalibrationSlider
         // Filter non-numeric characters (override optimistic UI from input binding in case no derived value update)
         textValue = textValue.replace(/\D/g, "");
 
         // Cast to number for processing
-        let textNumValue = Number(textValue) ?? 0;
+        let textNumValue = Number(textValue);
 
         // Check against min/max limits (override optimistic UI from input binding in case no derived value update)
         if (textNumValue > max * displayMultiplier) {
@@ -47,17 +47,18 @@
     }
 </script>
 
+<!-- Volume slider and text input -->
 <div class="flex flex-row flex-nowrap gap-3 items-center justify-start">
-    <input oninput={rangeChangeHandler} type="range" bind:value {min} {max} {step} title={Math.round(value * displayMultiplier).toString()} class="w-full h-8 rounded-lg appearance-none slider" style="--position: calc({(value / max) * 100 + "%"} + (({value / max}) - 0.5) * -1 * 0.625rem);">
-    <input oninput={textChangeHandler} type="text" bind:value={textValue} maxlength={Math.round(max * displayMultiplier).toString().length} pattern="\d*" inputmode="numeric" spellcheck="false" autocomplete="off" autocorrect="off" class="w-10 h-8 border-b-2 border-transparent focus:border-fuchsia-300 outline-0 translate-y-px transition duration-150 ease-circ-out text-center text-zinc-50 font-comfortaa">
+    <input oninput={rangeChangeHandler} type="range" bind:value {min} {max} {step} title={textValue} class="w-full h-8 rounded-lg appearance-none slider" style="--position: calc({(value / max) * 100 + "%"} + (({value / max}) - 0.5) * -1 * 0.625rem);">
+    <input oninput={textChangeHandler} type="text" bind:value={textValue} maxlength={Math.round(max * displayMultiplier).toString().length} pattern="\d*" inputmode="numeric" spellcheck="false" autocomplete="off" autocorrect="off" class="w-10 h-8 border-b-2 border-transparent focus:border-fuchsia-300 outline-none translate-y-px transition duration-150 ease-circ-out text-center text-zinc-50 font-comfortaa">
 </div>
 
 <style>
     /* Slider value background */
     .slider {
         background:
-            linear-gradient(to right, transparent var(--position), oklch(0.37 0.013 285.805) var(--position)), /* zinc-800 */
-            linear-gradient(to bottom, oklch(0.518 0.253 323.949) 0%, oklch(0.452 0.211 324.591) 100%); /* fuchsia-700 and fuchsia-800 */
+            linear-gradient(to right, transparent var(--position), oklch(37% 0.013 285.805) var(--position)), /* zinc-700 */
+            linear-gradient(to bottom, oklch(51.8% 0.253 323.949) 0%, oklch(45.2% 0.211 324.591) 100%); /* fuchsia-700 and fuchsia-800 */
     }
 
     /* WebKit Thumb */
@@ -65,7 +66,7 @@
         width: 1.25rem;
         height: 2rem;
         border-radius: 0.5rem; /* rounded-lg */
-        background-color: oklch(0.833 0.145 321.434); /* fuchsia-300 */
+        background-color: oklch(83.3% 0.145 321.434); /* fuchsia-300 */
         transition: 200ms var(--ease-circ-out);
         -webkit-appearance: none;
     }
@@ -78,7 +79,7 @@
         width: 1.25rem;
         height: 2rem; /* maybe 2.5 */
         border-radius: 0.5rem; /* rounded-lg */
-        background-color: oklch(0.833 0.145 321.434); /* fuchsia-300 */
+        background-color: oklch(83.3% 0.145 321.434); /* fuchsia-300 */
         border: none;
         transition: 200ms var(--ease-circ-out);
     }

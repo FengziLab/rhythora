@@ -1,11 +1,11 @@
-import { fadeToMusicVolume, fadeToSoundEffectsVolume, fadeToHitsoundsVolume } from "./audio-system";
+import { fadeToMusicVolume, fadeToSoundEffectsVolume, fadeToHitsoundsVolume, latencyDelayNode, analyserDelayNode } from "./audio-system";
 import type { Global, UserSettings, Screen, ScreenTransitionMode } from "./types";
 
 /* Default settings */
 export const DEFAULT_SETTINGS: UserSettings = {
     musicVolume: 1,
     soundEffectsVolume: 1,
-    hitsoundsVolume: 1,
+    hitsoundsVolume: 0.5,
     audioDisplacementMs: 0,
     inputDisplacementMs: 0,
     fpsCounter: false,
@@ -40,7 +40,9 @@ export const global: Global = $state({
     screenTransitionMode: "fade",
     returnScreen: null,
     gameScreenStatus: "inactive",
-    debugMessage: "Rhythora Debug"
+    isDebugPanelPassthroughEnabled: false,
+    debugMessage: "Rhythora Debug",
+    debugTriggerCount: 0
 });
 
 /* Global state setters */
@@ -59,6 +61,11 @@ export function setUserSetting<UserSetting extends keyof UserSettings>(setting: 
             break;
         case "hitsoundsVolume":
             fadeToHitsoundsVolume(newValue as number, -1); // NOTE: validated value type so make ts happy
+            break;
+        case "audioDisplacementMs":
+            if (latencyDelayNode === null || analyserDelayNode === null) break;
+            latencyDelayNode.delayTime.value = Math.max(0, -(newValue as number) / 1000); // NOTE: validated value type so make ts happy
+            analyserDelayNode.delayTime.value = Math.max(0, (newValue as number) / 1000); // NOTE: validated value type so make ts happy
             break;
     }
 

@@ -12,6 +12,7 @@
     import { audioContext, initializeAudioContext } from "$lib/system/audio-system";
     import { playRandomBackgroundMusic, resumeMusic } from "$lib/system/audio-helpers";
     import { global, loadUserSettings, setScreen } from "$lib/system/global.svelte";
+    import { returnToReturnScreen } from "$lib/system/helpers.svelte";
 
     // Local states
     let introElement: HTMLDivElement;
@@ -30,11 +31,17 @@
         global.waitingCount--;
         introStartTextElement.innerHTML = "- Click anywhere to start -";
 
-        // App-wise keydown listener
+        // App-wide keydown listener
         window.addEventListener("keydown", event => {
             // Debug panel control
             if (event.key === "Backspace" && !(document.activeElement?.tagName === "INPUT" || document.activeElement?.tagName === "TEXTAREA")) {
                 isDebugPanelShown = !isDebugPanelShown;
+            }
+
+            // Settings shortcut
+            else if (event.ctrlKey === true && event.key === "s") {
+                event.preventDefault();
+                global.openPanel = global.openPanel !== "settings" ? "settings" : "none";
             }
 
             // Global main button and back button
@@ -48,29 +55,26 @@
                         break;
                     case "editor":
                         setScreen("home", "to-right");
+                        break;
                 }
             } else if (event.key === "Escape" && event.target === document.body) {
                 switch (global.screen) {
                     case "song-select":
                         setScreen("home", "to-left");
                         break;
-                    case "game":
-                        // if (global.gameScreenStatus === "loading") {
-                        //     setScreen("song-select", "to-left");
-                        // } // TODO
-                        break;
+                    // case "game": // TODO
+                    //     if (global.gameScreenStatus === "loading") {
+                    //         setScreen("song-select", "to-left");
+                    //     }
+                    //     break;
                     case "editor":
                         setScreen("home", "to-right");
                         break;
-                    case "calibration":
-                        if (global.returnScreen !== null) {
-                            setScreen(global.returnScreen, "fade");
-                            global.returnScreen = null;
-                        }
-                        resumeMusic(1);
-                        break;
                 }
-            } else if (event.key === "Escape") {
+            }
+
+            // Escape focus
+            else if (event.key === "Escape") {
                 (document.activeElement as HTMLElement).blur(); // NOTE: the activeElement is probably an HTMLElement so make ts happy
             }
         });
@@ -102,13 +106,13 @@
     <title>Rhythora</title>
     <!-- <meta name="description" content="Tap the keyboard to the beat!"> -->
     <meta name="keywords" content="rhythora,rhythm game,music game,fengzi lab,online,free">
-    <meta name="theme-color" content="oklch(0.401 0.17 325.612)"> <!-- fuchsia-900 -->
+    <meta name="theme-color" content="oklch(45.2% 0.211 324.591)"> <!-- fuchsia-800 -->
     <!-- <link rel="preconnect" href="https://api.rhythora.com" /> -->
 </svelte:head>
 
-<!-- Background -->
-<div class="absolute inset-0 w-full h-full bg-[url(/assets/backgrounds/background-0.jpg)] bg-no-repeat bg-cover bg-center brightness-60"></div>
-{#if (global.gameScreenStatus !== "inactive" && global.gameScreenStatus !== "loading")}
+<!-- Backgrounds -->
+<div class="absolute inset-0 w-full h-full bg-[url(/assets/backgrounds/background-0.jpg)] bg-no-repeat bg-cover bg-center brightness-70"></div>
+{#if (global.gameScreenStatus !== "inactive" && global.gameScreenStatus !== "loading") || global.screen === "calibration"}
 <div in:fade={{ duration: 1000 }} out:fade={{ duration: 500, easing: circOut }} class="absolute inset-0 w-full h-full bg-[url(/assets/backgrounds/background-1.jpg)] bg-no-repeat bg-cover bg-center brightness-50"></div>
 {/if}
 <div class="absolute inset-0 w-full h-full {global.screen === "game" ?  "bg-black/50" : ""} backdrop-blur-3xl transition duration-1000 ease-circ-out"></div>

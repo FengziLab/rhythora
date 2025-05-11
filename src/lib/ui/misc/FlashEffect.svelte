@@ -3,10 +3,11 @@
     import { circOut } from "svelte/easing";
     import { audioContext, analyserNode } from "$lib/system/audio-system";
     import { global } from "$lib/system/global.svelte";
+    import { mod } from "$lib/system/helpers.svelte";
 
     // Local states
     let enabled = $derived(global.userSettings.backgroundFlashEffect === true && (global.screen === "home" || global.screen === "song-select") && global.musicPlayerData.isPlaying === true);
-    let animateLoopLock = false;
+    let animateLoopLock = false; // NOTE: can upgrade to animateLoopID system in the future
     let beatSeconds: number;
     let flashOpacityLeft = $state(0);
     let flashOpacityRight = $state(0);
@@ -39,15 +40,21 @@
     function animate() {
         if (audioContext !== null && analyserNode !== null) {
             // Calculate opacity factor based on beats
-            const songTime = audioContext.currentTime - global.musicPlayerData.logicalStartTime - global.musicPlayerData.song.offset;
-            const beatPositionLeft = songTime % (beatSeconds * 2) / (beatSeconds * 2);
+            const delayedSongTime = audioContext.currentTime - global.musicPlayerData.logicalStartTime - Math.max(0, global.userSettings.audioDisplacementMs / 1000) + global.musicPlayerData.song.offset; // NOTE: skipping render to start at offset is fine here since we're only calculating for beat info, for which rendering too early is expected, thus needs head start
+            // v1 fast but non-negative-aware algorithm: `delayedSongTime % (beatSeconds * 2) / (beatSeconds * 2)`
+            // v2 negative-aware algorithm: `1 - (((Math.floor(delayedSongTime / (beatSeconds * 2)) + 1) * (beatSeconds * 2) - delayedSongTime) / (beatSeconds * 2))`, tested to be nearly identical in performance (~900,000,000 ops/s)
+            // v3, based on v1 but with modulo fix:
+            const beatPositionLeft = mod(delayedSongTime, beatSeconds * 2) / (beatSeconds * 2);
             const beatOpacityLeft = 1 - (Math.min(beatPositionLeft / 0.95, (1 - beatPositionLeft) / 0.05) * 0.6);
-            const beatPositionRight = (songTime + beatSeconds) % (beatSeconds * 2) / (beatSeconds * 2);
+            // v1 odd beats: `(delayedSongTime + beatSeconds) % (beatSeconds * 2) / (beatSeconds * 2)`
+            // v2 not-tested algorithm based on old way: `1 - (((Math.floor((delayedSongTime + beatSeconds) / (beatSeconds * 2)) + 1) * (beatSeconds * 2) - (delayedSongTime + beatSeconds)) / (beatSeconds * 2))`
+            // v3 simple half shift:
+            const beatPositionRight = (beatPositionLeft + 0.5) % 1;
             const beatOpacityRight = 1 - (Math.min(beatPositionRight / 0.95, (1 - beatPositionRight) / 0.05) * 0.6);
 
             // Calculate opacity factor based on audio amplitude
             analyserNode.getByteFrequencyData(frequencyAmplitudeArray);
-            const averageAmplitude = frequencyAmplitudeArray.slice(0, Math.floor(frequencyAmplitudeArray.length * 0.25)).reduce((a, b) => a + b) / Math.floor(frequencyAmplitudeArray.length * 0.25) / 255; // TODO: if audio latency too high maybe default to 0.7 or something
+            const averageAmplitude = frequencyAmplitudeArray.slice(0, Math.floor(frequencyAmplitudeArray.length * 0.25)).reduce((a, b) => a + b) / Math.floor(frequencyAmplitudeArray.length * 0.25) / 255;
 
             // Apply styles
             flashOpacityLeft = beatOpacityLeft * averageAmplitude;
@@ -63,7 +70,7 @@
     }
 </script>
 
-<!-- Background music flashing effect (TODO) -->
+<!-- Background music flashing effect -->
 {#if enabled === true}
 <div transition:fade={{ duration: 300, easing: circOut }} class="absolute inset-0 {enabled === true ? "opacity-100" : "opacity-0"} transition duration-300 ease-circ-out pointer-events-none">
     <div style="opacity: {flashOpacityLeft};" class="absolute left-0 inset-y-0 w-52 max-pc:w-40 h-full bg-gradient-to-r from-zinc-500/50 to-transparent"></div>

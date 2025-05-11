@@ -1,17 +1,17 @@
-import { audioContext, musicSource, initializeAudioContext, loadMusicSource, unloadMusicSource } from "./audio-system";
+import { audioContext, hitsoundsVolumeNode, soundEffectsVolumeNode, soundBuffers, musicSource, initializeAudioContext, loadMusicSource, unloadMusicSource } from "./audio-system";
 import { global } from "$lib/system/global.svelte";
 import type { MusicData } from "$lib/system/types";
 
 let latestLoadTime = -1;
 
-/** Fade out current music, load audio link, then play the new one */
-export async function loadNewMusicFromLink(link: string, play = false, fadeOutSeconds = -1, fadeInSeconds = -1) {
+/** Fade out current music, load audio link, then play the new one (fails if unable to load or swap to new music) */
+export async function loadNewMusic(musicData: MusicData, play = false, fadeOutSeconds = -1, fadeInSeconds = -1): Promise<boolean> {
     // Check and initialize the audio context in case it's not initialized
     initializeAudioContext();
     if (audioContext!.state === "suspended") await audioContext!.resume(); // NOTE: guaranteed audioContext so make ts happy
 
     // ID the load to later check if we're the latest
-    const localLoadTime = audioContext!.currentTime // NOTE: guaranteed audioContext so make ts happy
+    const localLoadTime = audioContext!.currentTime; // NOTE: guaranteed audioContext so make ts happy
     latestLoadTime = localLoadTime;
 
     // Fade out current music and update global music player data
@@ -22,29 +22,44 @@ export async function loadNewMusicFromLink(link: string, play = false, fadeOutSe
     }
 
     // Load and decode audio
+    let audioBuffer = null;
     global.waitingCount++;
-    const response = await fetch(link);
-    const arrayBuffer = await response.arrayBuffer();
-    const audioBuffer = await audioContext!.decodeAudioData(arrayBuffer); // NOTE: guaranteed audioContext so make ts happy
+    try {
+        const response = await fetch(musicData.audioLink);
+        const arrayBuffer = await response.arrayBuffer();
+        audioBuffer = await audioContext!.decodeAudioData(arrayBuffer); // NOTE: guaranteed audioContext so make ts happy
+    } catch (error) {
+        global.waitingCount--;
+        return false;
+    }
     global.waitingCount--;
 
     // Ensure not overriding those started later but loaded faster
     if (localLoadTime === latestLoadTime) {
-        // If we are the latest then check and ensure we unload current music again in case one is playing
-        if (unloadMusicSource(fadeOutSeconds)) {
+        // If we are the latest then check and ensure we unload current music again in case one is now playing
+        if (unloadMusicSource(fadeOutSeconds) === true) {
             global.musicPlayerData.logicalStartTime = 0;
             global.musicPlayerData.pauseTime = -1;
             global.musicPlayerData.isPlaying = false;
         }
 
-        // Load the new one, play and update global music player data if requested
-        loadMusicSource(audioBuffer, play, fadeInSeconds);
+        // Load the new one
+        if (loadMusicSource(audioBuffer, play, fadeInSeconds) === false) return false;
+        global.musicPlayerData.song = musicData;
+
+        // Play and update global music player data if requested
         if (play === true) {
-            global.musicPlayerData.logicalStartTime = audioContext!.currentTime; // NOTE: could be slightly less accurate, use manual control for more accuracy
+            global.musicPlayerData.logicalStartTime = audioContext!.currentTime; // NOTE: guaranteed audioContext so make ts happy // NOTE: could be slightly less accurate, use manual control for more accuracy
             global.musicPlayerData.pauseTime = -1;
             global.musicPlayerData.isPlaying = true;
         }
+
+        // Loaded and happy
+        return true;
     }
+
+    // We are invalidated by another load request
+    return false;
 }
 
 // Temporary BGM list
@@ -122,11 +137,11 @@ export const BACKGROUND_MUSIC_LIST: MusicData[] = [
         offset: 0
     },
     {
-        name: "chariot_v4",
+        name: "Artificial Chariot (SY91419 Arr.)",
         author: "SY91419",
         mapper: "fengziya",
-        audioLink: "https://rhythora.us-lax-1.linodeobjects.com/chariot_v4.mp3",
-        length: 195,
+        audioLink: "https://rhythora.us-lax-1.linodeobjects.com/Artificial Chariot (SY91419 Arr.).mp3",
+        length: 196,
         bpm: 80,
         offset: 0
     },
@@ -168,19 +183,13 @@ export const BACKGROUND_MUSIC_LIST: MusicData[] = [
     }
 ];
 
-/** Switch to random new background music */
-export async function playRandomBackgroundMusic(fadeSeconds = -1) {
-    // Get random background music from default list
+/** Switch to random new background music (fails if unable to play) */
+export async function playRandomBackgroundMusic(fadeSeconds = -1): Promise<boolean> {
     const music = BACKGROUND_MUSIC_LIST[Math.floor(Math.random() * BACKGROUND_MUSIC_LIST.length)];
-
-    // Update song data
-    global.musicPlayerData.song = music;
-
-    // Play new music
-    await loadNewMusicFromLink(music.audioLink, true, fadeSeconds, fadeSeconds);
+    return await loadNewMusic(music, true, fadeSeconds, fadeSeconds);
 }
 
-/** Pause the music and take care of global music player data */
+/** Pause the music and take care of global music player data (fails if unable to pause) */
 export function pauseMusic(fadeOutSeconds = -1): boolean {
     if (audioContext === null) return false;
     const currentTime = audioContext.currentTime;
@@ -192,7 +201,7 @@ export function pauseMusic(fadeOutSeconds = -1): boolean {
     return false;
 }
 
-/** Resume the music and take care of global music player data */
+/** Resume the music and take care of global music player data (fails if unable to resume) */
 export function resumeMusic(fadeInSeconds = -1): boolean {
     if (loadMusicSource(null, false, fadeInSeconds) === true) {
         musicSource!.start(0, global.musicPlayerData.pauseTime); // NOTE: guaranteed musicSource so make ts happy
@@ -202,4 +211,49 @@ export function resumeMusic(fadeInSeconds = -1): boolean {
         return true;
     }
     return false;
+}
+
+// Hitsounds and sound effects list
+export const SOUND_LIST = {
+    stableNormalHitnormal: "/assets/samples/stable-normal-hitnormal.wav"
+};
+
+/** Load a sound if it's not already loaded in sound buffers (succeeds if loaded or already exists, fails if unable to load) */
+export async function loadSoundFromSoundList(key: keyof typeof SOUND_LIST): Promise<boolean> {
+    if (audioContext === null) return false;
+
+    if (soundBuffers[key]) return true;
+
+    global.waitingCount++;
+    try {
+        const response = await fetch(SOUND_LIST[key]);
+        const arrayBuffer = await response.arrayBuffer();
+        const audioBuffer = await audioContext.decodeAudioData(arrayBuffer);
+        soundBuffers[key] = audioBuffer;
+    } catch (error) {
+        global.waitingCount--;
+        return false;
+    }
+    global.waitingCount--;
+    return true;
+}
+
+/** Play a loaded hitsound */
+export function playHitsound(key: keyof typeof SOUND_LIST) {
+    const hitsoundSource = new AudioBufferSourceNode(audioContext!, { // NOTE: assumed audioContext so make ts happy
+        buffer: soundBuffers[key]
+    });
+    hitsoundSource.connect(hitsoundsVolumeNode!); // NOTE: assumed hitsoundsVolumeNode so make ts happy
+    hitsoundSource.start();
+    // NOTE: AudioBufferSourceNodes are automatically disconnected and cleaned up after play
+}
+
+/** Play a loaded sound effect */
+export function playSoundEffect(key: keyof typeof SOUND_LIST) {
+    const soundEffectSource = new AudioBufferSourceNode(audioContext!, { // NOTE: assumed audioContext so make ts happy
+        buffer: soundBuffers[key]
+    });
+    soundEffectSource.connect(soundEffectsVolumeNode!); // NOTE: assumed soundEffectsVolumeNode so make ts happy
+    soundEffectSource.start();
+    // NOTE: AudioBufferSourceNodes are automatically disconnected and cleaned up after play
 }

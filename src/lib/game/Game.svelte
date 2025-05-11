@@ -3,12 +3,32 @@
     import { fade, fly } from "svelte/transition";
     import { circOut } from "svelte/easing";
     import { audioContext, musicSource, loadMusicSource } from "$lib/system/audio-system";
-    import { pauseMusic, resumeMusic } from "$lib/system/audio-helpers";
+    import { pauseMusic, resumeMusic, playHitsound } from "$lib/system/audio-helpers";
     import { global, setScreen } from "$lib/system/global.svelte";
-    import { impreciseSleep } from "$lib/system/helpers";
+    import { impreciseSleep } from "$lib/system/helpers.svelte";
     import type { Note, GameNote } from "$lib/system/types";
 
-    // Canvas and local states
+    // Game settings
+    const NOTE_BEFORE_SECONDS = 0.8;
+    const NOTE_AFTER_SECONDS = 0.2;
+    const NOTE_FADE_SECONDS = 0.2;
+    const NOTE_APPROACH_SECONDS = 0.8;
+    const NOTE_HIT_FADE_SECONDS = 0.1;
+    
+    // Game states
+    let gameChart: GameNote[];
+    let onScreenNotes: GameNote[] = [];
+    let onScreenNotesSeekIndex = 0;
+    let isPausedOverlayShown = $state(false);
+
+    // Game stats
+    let currentCombo = $state(0);
+    let comboText = $derived(currentCombo.toString());
+    let accuracy = $state(1);
+    let accuracyText = $derived(`${(accuracy * 100).toFixed(2)}%`);
+    
+    // Canvas
+    let drawLoopID: number | null = null;
     let canvasElement: HTMLCanvasElement;
     let canvasCtx: CanvasRenderingContext2D;
     let canvasWidth = $state(300);
@@ -17,19 +37,6 @@
     let noteRadius = $derived(noteDiameter / 2);
     let noteAreaXOffset = $derived((canvasWidth - (noteDiameter * 10)) / 2);
     let noteAreaYOffset = $derived((canvasHeight - (noteDiameter * 6)) / 2);
-    let isPausedOverlayShown = $state(false);
-
-    const NOTE_BEFORE_SECONDS = 0.8;
-    const NOTE_AFTER_SECONDS = 0.2;
-    const NOTE_FADE_SECONDS = 0.2;
-    const NOTE_APPROACH_SECONDS = 0.8;
-    const NOTE_HIT_FADE_SECONDS = 0.1;
-    let onScreenNotes: GameNote[] = [];
-    let onScreenNotesSeekIndex = 0;
-    let currentCombo = $state(0);
-    let comboText = $derived(currentCombo.toString());
-    let accuracy = $state(1);
-    let accuracyText = $derived(`${(accuracy * 100).toFixed(2)}%`);
 
     let frameTimestamps: number[] = [];
     let updateIntervalID: number;
@@ -39,6 +46,9 @@
 
     // When game area loads
     onMount(() => {
+        // Convert game chart
+        convertToGameChart(CHART);
+
         // Prepare canvas context
         const ctx = canvasElement.getContext("2d");
         if (ctx === null) return; // TODO: can do notif
@@ -62,7 +72,7 @@
         window.removeEventListener("keydown", keydownHandler);
     });
 
-    /** Start rendering and start the music after minimum appearing time */
+    /** Start drawing and start the music after minimum appearing time */
     export function canStart() {
         if (audioContext === null || musicSource === null) return false;
 
@@ -73,12 +83,12 @@
         musicSource.start(startTime);
 
         // Update global music player data
-        global.musicPlayerData.logicalStartTime = startTime; // TODO:  + offset + audioContext.baseLatency + audioContext.outputLatency
+        global.musicPlayerData.logicalStartTime = startTime;
         global.musicPlayerData.pauseTime = -1;
         global.musicPlayerData.isPlaying = true;
 
-        // Start rendering right away
-        requestAnimationFrame(render);
+        // Start drawing right away
+        drawLoopID = requestAnimationFrame(draw);
     }
 
     // Load chart
@@ -115,48 +125,53 @@
         { type: "tap", time: 19, position: { row: 2, xPos: 9 } },
     ]; // DEBUG: temporary
 
-    // Generate game chart from chart and mark sync notes
-    const chart: GameNote[] = CHART.map(note => {
-        return {
-            ...note,
-            isSyncNote: false,
-            hitAt: -1,
-            hitAccuracyRating: "standby"
-        }
-    });
-    for (let i = 1; i < chart.length; i++) {
-        if (chart[i].time === chart[i - 1].time) {
-            chart[i].isSyncNote = true;
-            chart[i - 1].isSyncNote = true;
+    /** Assign fresh game chart converted from a chart */
+    function convertToGameChart(chart: Note[]) {
+        // Convert Notes to GameNotes
+        gameChart = CHART.map(note => {
+            return {
+                ...note,
+                isSyncNote: false,
+                hitAt: -1,
+                hitAccuracyRating: "standby"
+            }
+        });
+
+        // Mark sync notes
+        for (let i = 1; i < gameChart.length; i++) {
+            if (gameChart[i].time === gameChart[i - 1].time) {
+                gameChart[i].isSyncNote = true;
+                gameChart[i - 1].isSyncNote = true;
+            }
         }
     }
 
     /* ------------------------------ Visuals ------------------------------ */
 
-    /** Render next frame or start rendering sequence */
-    function render() {
+    /** Draw next frame or start drawing sequence */
+    function draw() {
         // Clear canvas
         canvasCtx.clearRect(0, 0, canvasWidth, canvasHeight);
 
         // Draw progress bar
-        const gameTime = audioContext!.currentTime - global.musicPlayerData.logicalStartTime - (global.userSettings.audioDisplacementMs / 1000); // NOTE: guaranteed audioContext so make ts happy
+        const delayedGameTime = audioContext!.currentTime - global.musicPlayerData.logicalStartTime - Math.max(0, global.userSettings.audioDisplacementMs / 1000); // NOTE: guaranteed audioContext so make ts happy // NOTE: don't account for offset here, use skipping and ensure feedbacks are synced (assuming chart notes are written on actual time, or else seeking logic needs to be changed too)
         canvasCtx.fillStyle = "#d4d4d8"; // zinc-300 (hex)
         canvasCtx.globalAlpha = 1;
-        canvasCtx.fillRect(0, canvasHeight - 5, gameTime / global.musicPlayerData.song.length * canvasWidth, 5);
+        canvasCtx.fillRect(0, canvasHeight - 5, delayedGameTime / global.musicPlayerData.song.length * canvasWidth, 5);
 
         // Clear long unhit notes (temporary solution, doesn't work with other note types)
         let removeCount = 0;
         for (let i = 0; i < onScreenNotes.length; i++) {
-            if (onScreenNotes[i].time + NOTE_AFTER_SECONDS < gameTime) {
+            if (onScreenNotes[i].time + NOTE_AFTER_SECONDS < delayedGameTime) {
                 removeCount++;
             }
         }
         onScreenNotes.splice(0, removeCount);
 
         // Seek and add new notes (depends on note time in chart being in order)
-        for (let i = onScreenNotesSeekIndex; i < chart.length; i++) {
-            if (chart[i].time - NOTE_BEFORE_SECONDS <= gameTime) {
-                onScreenNotes.push(chart[i] as GameNote);
+        for (let i = onScreenNotesSeekIndex; i < gameChart.length; i++) {
+            if (gameChart[i].time - NOTE_BEFORE_SECONDS <= delayedGameTime) {
+                onScreenNotes.push(gameChart[i] as GameNote);
                 onScreenNotesSeekIndex++;
             }
         }
@@ -172,10 +187,10 @@
                 canvasCtx.fillStyle = note.hitAt === -1 ? "#7823c2" : "#226622";
                 const noteOpacity = Math.min(
                     Math.min(
-                        gameTime - (note.time - NOTE_BEFORE_SECONDS), // fade in
-                        (note.time + NOTE_AFTER_SECONDS) - gameTime, // fade out
+                        delayedGameTime - (note.time - NOTE_BEFORE_SECONDS), // fade in
+                        (note.time + NOTE_AFTER_SECONDS) - delayedGameTime, // fade out
                     ) / NOTE_FADE_SECONDS, // convert faded time to opacity value
-                    note.hitAt !== -1 ? Math.max(NOTE_HIT_FADE_SECONDS - (gameTime - note.hitAt), 0) / NOTE_HIT_FADE_SECONDS : Infinity, // fade out on hit
+                    note.hitAt !== -1 ? Math.max(NOTE_HIT_FADE_SECONDS - (delayedGameTime - note.hitAt), 0) / NOTE_HIT_FADE_SECONDS : Number.POSITIVE_INFINITY, // fade out on hit
                     1
                 );
                 canvasCtx.globalAlpha = noteOpacity;
@@ -192,7 +207,7 @@
                 canvasCtx.stroke();
 
                 // Approach circle
-                const approachRemainingPercentage = (note.time - gameTime) / NOTE_APPROACH_SECONDS;
+                const approachRemainingPercentage = (note.time - delayedGameTime) / NOTE_APPROACH_SECONDS;
                 if (approachRemainingPercentage <= 1) {
                     canvasCtx.strokeStyle = "#d4d4d8"; // zinc-300 (hex)
                     canvasCtx.globalAlpha = Math.min(1 - approachRemainingPercentage, 1) * noteOpacity;
@@ -203,13 +218,13 @@
             }
         }
 
-        // FPS Counter
+        // FPS counter
         if (global.userSettings.fpsCounter === true) {
             frameTimestamps.push(performance.now());
         }
 
-        // Render next frame
-        if (isPausedOverlayShown === false) requestAnimationFrame(render);
+        // Draw next frame
+        drawLoopID = requestAnimationFrame(draw);
     }
 
     /* ------------------------------ Input ------------------------------ */
@@ -271,12 +286,17 @@
 
     /** Handle game input (TODO) (TODO: only for keydown) */
     function gameInput(row: number) {
-        if (audioContext === null) return;
+        // Record timing
+        const hitAt = audioContext!.currentTime - global.musicPlayerData.logicalStartTime; // NOTE: assumed audioContext so make ts happy
 
+        // Play hitsound
+        playHitsound("stableNormalHitnormal");
+
+        // Hit note
         for (let i = 0; i < onScreenNotes.length; i++) {
             if (onScreenNotes[i].position.row === row && onScreenNotes[i].hitAt === -1) {
                 currentCombo++;
-                onScreenNotes[i].hitAt = audioContext.currentTime - global.musicPlayerData.logicalStartTime;
+                onScreenNotes[i].hitAt = hitAt;
                 // TODO: hit accuracy rating
                 break;
             }
@@ -285,30 +305,63 @@
 
     /** Fade out for 1 second and switch to Song Select screen */
     async function exit() {
+        // Stop drawing
+        if (drawLoopID !== null) {
+            cancelAnimationFrame(drawLoopID);
+        }
+
+        // Exit pause overlay
         isPausedOverlayShown = false;
+
+        // Wait 1000ms at fading out status
         global.gameScreenStatus = "before-game";
         await impreciseSleep(1000);
+
+        // Switch screen back
         setScreen("song-select", "to-left");
     }
     /** Reset on-screen notes, combo, accuracy, and reload music to restart (TODO: reconvert game chart maybe) */
     function restart() {
+        // Stop drawing
+        if (drawLoopID !== null) {
+            cancelAnimationFrame(drawLoopID);
+        }
+
+        // Reset status
         onScreenNotes = [];
         onScreenNotesSeekIndex = 0;
         currentCombo = 0;
         accuracy = 1;
+
+        // Regenerate game chart
+        convertToGameChart(CHART);
+
+        // Exit pause overlay
         isPausedOverlayShown = false;
+
+        // Load audio source but not resume yet, then mark ready for starting
         if (loadMusicSource(null, false, 0) === true) {
             canStart();
         }
     }
-    /** Toggle game and audio pausing (TODO: use animate and audio locks maybe) */
+    /** Toggle game and audio pausing */
     function togglePause() {
+        // Pause
         if (isPausedOverlayShown === false && audioContext!.currentTime > global.musicPlayerData.logicalStartTime) { // NOTE: will return false anyway so make ts happy
             pauseMusic(-1);
+            if (drawLoopID !== null) {
+                cancelAnimationFrame(drawLoopID);
+            }
             isPausedOverlayShown = true;
-        } else {
+        }
+        
+        // Resume
+        else {
             isPausedOverlayShown = false;
-            requestAnimationFrame(render);
+            if (drawLoopID !== null) {
+                cancelAnimationFrame(drawLoopID);
+            }
+            drawLoopID = requestAnimationFrame(draw);
             resumeMusic(-1);
         }
     }
@@ -319,7 +372,7 @@
 
 <!-- Pause button -->
 <button onclick={togglePause} title="Pause" aria-label="Pause" tabindex="-1" class="absolute left-0 top-0 group size-24 max-padh:size-16 outline-none flex items-center justify-center"> <!-- NOTE: add box-content if using padding to control offset -->
-    <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="currentColor" class="size-6 fill-zinc-300 group-hover:fill-zinc-50 group-focus:fill-zinc-50 transition-colors duration-150 ease-circ-out">
+    <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="currentColor" class="size-6 fill-zinc-300 group-hover:fill-zinc-50 group-focus-visible:fill-zinc-50 transition-colors duration-150 ease-circ-out">
         <path fill-rule="evenodd" d="M6.75 5.25a.75.75 0 0 1 .75-.75H9a.75.75 0 0 1 .75.75v13.5a.75.75 0 0 1-.75.75H7.5a.75.75 0 0 1-.75-.75V5.25Zm7.5 0A.75.75 0 0 1 15 4.5h1.5a.75.75 0 0 1 .75.75v13.5a.75.75 0 0 1-.75.75H15a.75.75 0 0 1-.75-.75V5.25Z" clip-rule="evenodd" />
     </svg>
 </button>

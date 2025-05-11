@@ -17,6 +17,8 @@
     --font-poppins: "Poppins", "Comfortaa", "Helvetica", sans-serif;
 
     --ease-quart-out: cubic-bezier(0.25, 1, 0.5, 1);
+    --ease-quint-out: cubic-bezier(0.22, 1, 0.36, 1);
+    --ease-expo-out: cubic-bezier(0.16, 1, 0.3, 1);
     --ease-circ-out: cubic-bezier(0, 0.55, 0.45, 1);
 }
 

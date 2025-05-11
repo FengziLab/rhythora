@@ -2,7 +2,7 @@
     import { fly } from "svelte/transition";
     import { circOut } from "svelte/easing";
     import { global } from "$lib/system/global.svelte";
-    import { getScreenTransitionX } from "$lib/system/helpers";
+    import { getScreenTransitionX } from "$lib/system/helpers.svelte";
 
     // Local states
     let screenTransitionX = $derived(getScreenTransitionX("home", global.screen, global.screenTransitionMode, 100));

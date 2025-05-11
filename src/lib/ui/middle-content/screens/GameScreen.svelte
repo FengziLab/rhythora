@@ -3,9 +3,9 @@
     import { fly } from "svelte/transition";
     import { circIn, circOut } from "svelte/easing";
     import Game from "$lib/game/Game.svelte";
-    import { loadNewMusicFromLink, BACKGROUND_MUSIC_LIST } from "$lib/system/audio-helpers";
+    import { loadNewMusic, BACKGROUND_MUSIC_LIST, loadSoundFromSoundList } from "$lib/system/audio-helpers";
     import { global } from "$lib/system/global.svelte";
-    import { impreciseSleep } from "$lib/system/helpers";
+    import { impreciseSleep } from "$lib/system/helpers.svelte";
 
     // Local states
     let gameElement: Game;
@@ -14,8 +14,7 @@
     onMount(async () => {
         // Fade in loading info and load resources, wait finish && [1500]-2000ms: loading info animation attack + sustain done
         global.gameScreenStatus = "loading";
-        global.musicPlayerData.song = BACKGROUND_MUSIC_LIST[4]; // TODO: temporary
-        await Promise.all([loadNewMusicFromLink(global.musicPlayerData.song.audioLink, false, 1.5, -1), impreciseSleep(1500)]);
+        await Promise.all([loadNewMusic(BACKGROUND_MUSIC_LIST[4] /* TODO: temporary */, false, 1.5, -1), loadSoundFromSoundList("stableNormalHitnormal"), impreciseSleep(1500)]);
 
         // Fade out loading info, wait [500]-1000ms: loading info animation release done
         global.gameScreenStatus = "before-game";
