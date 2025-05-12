@@ -40,7 +40,7 @@
     function animate() {
         if (audioContext !== null && analyserNode !== null) {
             // Calculate opacity factor based on beats
-            const delayedSongTime = audioContext.currentTime - global.musicPlayerData.logicalStartTime - Math.max(0, global.userSettings.audioDisplacementMs / 1000) + global.musicPlayerData.song.offset; // NOTE: skipping render to start at offset is fine here since we're only calculating for beat info, for which rendering too early is expected, thus needs head start
+            const delayedSongTime = audioContext.currentTime - global.musicPlayerData.logicalStartTime - Math.max(0, global.userSettings.audioDisplacementMs / 1000) - global.musicPlayerData.song.offset; // NOTE: skipping render to start at offset is fine here since we're only calculating for beat info, for which rendering too early is expected, thus needs head start
             // v1 fast but non-negative-aware algorithm: `delayedSongTime % (beatSeconds * 2) / (beatSeconds * 2)`
             // v2 negative-aware algorithm: `1 - (((Math.floor(delayedSongTime / (beatSeconds * 2)) + 1) * (beatSeconds * 2) - delayedSongTime) / (beatSeconds * 2))`, tested to be nearly identical in performance (~900,000,000 ops/s)
             // v3, based on v1 but with modulo fix:

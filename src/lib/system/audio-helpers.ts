@@ -70,8 +70,8 @@ export const BACKGROUND_MUSIC_LIST: MusicData[] = [
         mapper: "fengziya",
         audioLink: "https://rhythora.us-lax-1.linodeobjects.com/triangles.mp3",
         length: 126,
-        bpm: 80,
-        offset: 0
+        bpm: 160,
+        offset: 3.06
     },
     {
         name: "circles!",
@@ -79,8 +79,8 @@ export const BACKGROUND_MUSIC_LIST: MusicData[] = [
         mapper: "fengziya",
         audioLink: "https://rhythora.us-lax-1.linodeobjects.com/circles!.mp3",
         length: 139,
-        bpm: 93,
-        offset: 0
+        bpm: 184,
+        offset: 2.63
     },
     {
         name: "aureole",
@@ -88,8 +88,8 @@ export const BACKGROUND_MUSIC_LIST: MusicData[] = [
         mapper: "fengziya",
         audioLink: "https://rhythora.us-lax-1.linodeobjects.com/aureole.mp3",
         length: 164,
-        bpm: 140,
-        offset: 0
+        bpm: 70,
+        offset: 1.74
     },
     {
         name: "circle the halls",
@@ -97,8 +97,8 @@ export const BACKGROUND_MUSIC_LIST: MusicData[] = [
         mapper: "fengziya",
         audioLink: "https://rhythora.us-lax-1.linodeobjects.com/circle the halls.mp3",
         length: 111,
-        bpm: 86,
-        offset: 0
+        bpm: 172,
+        offset: 5.95
     },
     {
         name: "最後的灰燼",
@@ -107,7 +107,7 @@ export const BACKGROUND_MUSIC_LIST: MusicData[] = [
         audioLink: "https://rhythora.us-lax-1.linodeobjects.com/最後的灰燼.mp3",
         length: 114,
         bpm: 150,
-        offset: 0
+        offset: 0.27
     },
     {
         name: "終結？",
@@ -116,7 +116,7 @@ export const BACKGROUND_MUSIC_LIST: MusicData[] = [
         audioLink: "https://rhythora.us-lax-1.linodeobjects.com/終結？.mp3",
         length: 152,
         bpm: 83,
-        offset: 0
+        offset: 0.19
     },
     {
         name: "劫炎",
@@ -125,7 +125,7 @@ export const BACKGROUND_MUSIC_LIST: MusicData[] = [
         audioLink: "https://rhythora.us-lax-1.linodeobjects.com/劫炎.mp3",
         length: 94,
         bpm: 99,
-        offset: 0
+        offset: 0.19
     },
     {
         name: "即刻，現在！",
@@ -134,7 +134,7 @@ export const BACKGROUND_MUSIC_LIST: MusicData[] = [
         audioLink: "https://rhythora.us-lax-1.linodeobjects.com/即刻，現在！.mp3",
         length: 163,
         bpm: 108,
-        offset: 0
+        offset: 0.45
     },
     {
         name: "Artificial Chariot (SY91419 Arr.)",
@@ -143,7 +143,7 @@ export const BACKGROUND_MUSIC_LIST: MusicData[] = [
         audioLink: "https://rhythora.us-lax-1.linodeobjects.com/Artificial Chariot (SY91419 Arr.).mp3",
         length: 196,
         bpm: 80,
-        offset: 0
+        offset: 0.02
     },
     {
         name: "athazagoraphobia",
@@ -152,7 +152,7 @@ export const BACKGROUND_MUSIC_LIST: MusicData[] = [
         audioLink: "https://rhythora.us-lax-1.linodeobjects.com/athazagoraphobia.mp3",
         length: 187,
         bpm: 123,
-        offset: 0
+        offset: 17.26
     },
     {
         name: "moonbath (remix)",
@@ -161,7 +161,7 @@ export const BACKGROUND_MUSIC_LIST: MusicData[] = [
         audioLink: "https://rhythora.us-lax-1.linodeobjects.com/moonbath (remix).mp3",
         length: 96,
         bpm: 90,
-        offset: 0
+        offset: 2.70
     },
     {
         name: "Inverted World",
@@ -169,8 +169,8 @@ export const BACKGROUND_MUSIC_LIST: MusicData[] = [
         mapper: "fengziya",
         audioLink: "https://rhythora.us-lax-1.linodeobjects.com/Inverted World.mp3",
         length: 131,
-        bpm: 90,
-        offset: 0
+        bpm: 180,
+        offset: 0.04
     },
     {
         name: "The Last Page",
@@ -178,8 +178,8 @@ export const BACKGROUND_MUSIC_LIST: MusicData[] = [
         mapper: "fengziya",
         audioLink: "https://rhythora.us-lax-1.linodeobjects.com/The Last Page.mp3",
         length: 143,
-        bpm: 65,
-        offset: 0
+        bpm: 130, // TODO: what to do with triple time songs? original bpm 195
+        offset: 7.43
     }
 ];
 

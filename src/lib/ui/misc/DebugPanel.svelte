@@ -42,6 +42,8 @@
             isPlaying: ${global.musicPlayerData.isPlaying} <br/>
             logicalStartTime: ${global.musicPlayerData.logicalStartTime.toFixed(2)} <br/>
             pauseTime: ${global.musicPlayerData.pauseTime.toFixed(2)} <br/>
+            songBPM: ${global.musicPlayerData.song.bpm} <br/>
+            songOffset: ${global.musicPlayerData.song.offset} <br/>
         `;
         displayTextCol2 = `
             [UI] <br/>
