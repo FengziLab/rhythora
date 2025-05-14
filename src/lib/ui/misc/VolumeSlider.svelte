@@ -49,7 +49,7 @@
 
 <!-- Volume slider and text input -->
 <div class="flex flex-row flex-nowrap gap-3 items-center justify-start">
-    <input oninput={rangeChangeHandler} type="range" bind:value {min} {max} {step} title={textValue} class="w-full h-8 rounded-lg appearance-none slider" style="--position: calc({(value / max) * 100 + "%"} + (({value / max}) - 0.5) * -1 * 0.625rem);">
+    <input oninput={rangeChangeHandler} type="range" bind:value {min} {max} {step} title={`${textValue}%`} class="w-full h-8 rounded-lg appearance-none slider" style="--position: calc({(value / max) * 100 + "%"} + (({value / max}) - 0.5) * -1 * 0.625rem);">
     <input oninput={textChangeHandler} type="text" bind:value={textValue} maxlength={Math.round(max * displayMultiplier).toString().length} pattern="\d*" inputmode="numeric" spellcheck="false" autocomplete="off" autocorrect="off" class="w-10 h-8 border-b-2 border-transparent focus:border-fuchsia-300 outline-none translate-y-px transition duration-150 ease-circ-out text-center text-zinc-50 font-comfortaa">
 </div>
 
@@ -67,7 +67,7 @@
         height: 2rem;
         border-radius: 0.5rem; /* rounded-lg */
         background-color: oklch(83.3% 0.145 321.434); /* fuchsia-300 */
-        transition: 200ms var(--ease-circ-out);
+        transition: 150ms var(--ease-circ-out);
         -webkit-appearance: none;
     }
     .slider::-webkit-slider-thumb:hover {

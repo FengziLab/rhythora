@@ -42,3 +42,14 @@ body {
     height: 100%;
     margin: 0;
 }
+
+/* Custom utilities */
+.scrollbar-thin {
+    scrollbar-width: thin;
+}
+.scrollbar-hidden {
+    scrollbar-width: none;
+}
+.scrollbar-dark {
+    scrollbar-color: oklch(44.2% 0.017 285.786 / 0.6) transparent; /* zinc-600/60 */
+}

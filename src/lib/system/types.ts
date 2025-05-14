@@ -14,6 +14,7 @@ export interface Global {
     screenTransitionMode: ScreenTransitionMode,
     returnScreen: Screen | null,
     gameScreenStatus: GameScreenStatus,
+    isDebugPanelShowing: boolean,
     isDebugPanelPassthroughEnabled: boolean,
     debugMessage: string,
     debugTriggerCount: number
@@ -21,8 +22,8 @@ export interface Global {
 
 export interface UserSettings {
     musicVolume: number,
-    soundEffectsVolume: number,
     hitsoundsVolume: number,
+    soundEffectsVolume: number,
     audioDisplacementMs: number,
     inputDisplacementMs: number,
     fpsCounter: boolean,

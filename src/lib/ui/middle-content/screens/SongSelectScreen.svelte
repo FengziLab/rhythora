@@ -8,7 +8,7 @@
     let screenTransitionX = $derived(getScreenTransitionX("song-select", global.screen, global.screenTransitionMode, 100));
 </script>
 
-<!-- Song Select screen (TODO) -->
+<!-- Song select screen (TODO) -->
 <div transition:fly={{ duration: 300, easing: circOut, x: screenTransitionX }} class="row-start-1 col-start-1 w-full h-full p-4 flex flex-col flex-nowrap gap-2 items-center justify-center">
     <span class="text-zinc-50 text-xl font-comfortaa tracking-wide">Hi and welcome to Rhythora</span>
     <span class="text-zinc-50 text-xl font-comfortaa tracking-wide">The Rhythorian Corporation is busy making the song select screen</span>

@@ -3,7 +3,7 @@
     import { fade, fly } from "svelte/transition";
     import { circOut } from "svelte/easing";
     import CalibrationSlider from "$lib/ui/misc/CalibrationSlider.svelte";
-    import { audioContext, initializeAudioContext } from "$lib/system/audio-system";
+    import { audioContext, initializeAudioSystem } from "$lib/system/audio-system";
     import { pauseMusic, loadSoundFromSoundList, playHitsound } from "$lib/system/audio-helpers";
     import { DEFAULT_SETTINGS, global, setUserSetting } from "$lib/system/global.svelte";
     import { returnToReturnScreen } from "$lib/system/helpers.svelte";
@@ -66,7 +66,7 @@
     // On screen loaded
     onMount(async () => {
         // Check and initialize the audio context in case it's not initialized
-        initializeAudioContext();
+        initializeAudioSystem();
         if (audioContext!.state === "suspended") await audioContext!.resume(); // NOTE: guaranteed audioContext so make ts happy
 
         // Pause music

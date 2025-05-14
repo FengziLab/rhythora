@@ -9,16 +9,14 @@
     import SettingsPanel from "$lib/ui/panels/SettingsPanel.svelte";
     import NotificationsPanel from "$lib/ui/panels/NotificationsPanel.svelte";
     import DebugPanel from "$lib/ui/misc/DebugPanel.svelte";
-    import { audioContext, initializeAudioContext } from "$lib/system/audio-system";
+    import { audioContext, initializeAudioSystem } from "$lib/system/audio-system";
     import { playRandomBackgroundMusic, resumeMusic } from "$lib/system/audio-helpers";
     import { global, loadUserSettings, setScreen } from "$lib/system/global.svelte";
-    import { returnToReturnScreen } from "$lib/system/helpers.svelte";
 
     // Local states
     let introElement: HTMLDivElement;
     let introStartTextElement: HTMLSpanElement;
     let isIntroOutStylesEnabled = $state(false);
-    let isDebugPanelShown = $state(false);
 
     // When js is ready
     onMount(async () => {
@@ -35,7 +33,7 @@
         window.addEventListener("keydown", event => {
             // Debug panel control
             if (event.key === "Backspace" && !(document.activeElement?.tagName === "INPUT" || document.activeElement?.tagName === "TEXTAREA")) {
-                isDebugPanelShown = !isDebugPanelShown;
+                global.isDebugPanelShowing = !global.isDebugPanelShowing;
             }
 
             // Settings shortcut
@@ -90,7 +88,7 @@
         introElement.removeEventListener("keyup", introClickHandler);
 
         // Ensure audio is playable since this is first user event and start sounds
-        initializeAudioContext();
+        initializeAudioSystem();
         if (audioContext!.state === "suspended") await audioContext!.resume(); // NOTE: guaranteed audioContext so make ts happy
         // TODO: play sound effect
 
@@ -154,6 +152,6 @@
 </div>
 
 <!-- Debug panel -->
-{#if isDebugPanelShown === true}
+{#if global.isDebugPanelShowing === true}
 <DebugPanel />
 {/if}

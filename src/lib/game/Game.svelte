@@ -94,35 +94,37 @@
     // Load chart
     const CHART: Note[] = [
         { type: "tap", time: 0, position: { row: 1, xPos: 0 } },
-        { type: "tap", time: 1, position: { row: 1, xPos: 1 } },
-        { type: "tap", time: 2, position: { row: 1, xPos: 2 } },
-        { type: "tap", time: 2, position: { row: 1, xPos: 3 } },
-        { type: "tap", time: 2.5, position: { row: 2, xPos: 2.5 } },
-        { type: "tap", time: 3, position: { row: 1, xPos: 3 } },
-        { type: "tap", time: 3.5, position: { row: 2, xPos: 3.5 } },
-        { type: "tap", time: 4, position: { row: 1, xPos: 4 } },
-        { type: "tap", time: 5, position: { row: 1, xPos: 5 } },
-        { type: "tap", time: 6, position: { row: 1, xPos: 6 } },
-        { type: "tap", time: 7, position: { row: 1, xPos: 7 } },
-        { type: "tap", time: 8, position: { row: 1, xPos: 8 } },
-        { type: "tap", time: 8.25, position: { row: 2, xPos: 8.25 } },
-        { type: "tap", time: 8.5, position: { row: 3, xPos: 8.5 } },
-        { type: "tap", time: 8.75, position: { row: 2, xPos: 8.75 } },
-        { type: "tap", time: 9, position: { row: 1, xPos: 9 } },
-        { type: "tap", time: 10, position: { row: 2, xPos: 0 } },
-        { type: "tap", time: 11, position: { row: 2, xPos: 1 } },
-        { type: "tap", time: 12, position: { row: 2, xPos: 2 } },
-        { type: "tap", time: 12.5, position: { row: 3, xPos: 2.5 } },
-        { type: "tap", time: 13, position: { row: 2, xPos: 3 } },
-        { type: "tap", time: 13.5, position: { row: 3, xPos: 3.5 } },
-        { type: "tap", time: 14, position: { row: 2, xPos: 4 } },
-        { type: "tap", time: 15, position: { row: 2, xPos: 5 } },
-        { type: "tap", time: 16, position: { row: 2, xPos: 6 } },
-        { type: "tap", time: 17, position: { row: 2, xPos: 7 } },
-        { type: "tap", time: 18, position: { row: 2, xPos: 8 } },
-        { type: "tap", time: 18.25, position: { row: 3, xPos: 8.25 } },
-        { type: "tap", time: 18.75, position: { row: 3, xPos: 8.75 } },
-        { type: "tap", time: 19, position: { row: 2, xPos: 9 } },
+        { type: "tap", time: 0.4, position: { row: 1, xPos: 1 } },
+        { type: "tap", time: 0.8, position: { row: 1, xPos: 2 } },
+        { type: "tap", time: 1.0, position: { row: 2, xPos: 2.5 } },
+        { type: "tap", time: 1.2, position: { row: 1, xPos: 3 } },
+        { type: "tap", time: 1.4, position: { row: 2, xPos: 3.5 } },
+        { type: "tap", time: 1.6, position: { row: 1, xPos: 4 } },
+        { type: "tap", time: 2, position: { row: 1, xPos: 5 } },
+        { type: "tap", time: 2.4, position: { row: 1, xPos: 6 } },
+        { type: "tap", time: 2.8, position: { row: 1, xPos: 7 } },
+
+        { type: "tap", time: 3.2, position: { row: 2, xPos: 3 } },
+        { type: "tap", time: 3.6, position: { row: 2, xPos: 4 } },
+        { type: "tap", time: 4, position: { row: 2, xPos: 5 } },
+        { type: "tap", time: 4.2, position: { row: 3, xPos: 5.5 } },
+        { type: "tap", time: 4.4, position: { row: 2, xPos: 6 } },
+        { type: "tap", time: 4.6, position: { row: 1, xPos: 6.5 } },
+        { type: "tap", time: 4.8, position: { row: 2, xPos: 7 } },
+        { type: "tap", time: 5.2, position: { row: 2, xPos: 8 } },
+        { type: "tap", time: 5.6, position: { row: 2, xPos: 9 } },
+        { type: "tap", time: 6, position: { row: 3, xPos: 9.5 } },
+
+        { type: "tap", time: 6.4, position: { row: 2, xPos: 2 } },
+        { type: "tap", time: 6.8, position: { row: 3, xPos: 3 } },
+        { type: "tap", time: 7.2, position: { row: 2, xPos: 4 } },
+        { type: "tap", time: 7.4, position: { row: 3, xPos: 4.5 } },
+        { type: "tap", time: 7.8, position: { row: 2, xPos: 6 } },
+        { type: "tap", time: 8.4, position: { row: 2, xPos: 7 } },
+        { type: "tap", time: 8.8, position: { row: 1, xPos: 8 } },
+        { type: "tap", time: 9, position: { row: 2, xPos: 8.25 } },
+        { type: "tap", time: 9.2, position: { row: 3, xPos: 8.75 } },
+        { type: "tap", time: 9.4, position: { row: 2, xPos: 9 } },
     ]; // DEBUG: temporary
 
     /** Assign fresh game chart converted from a chart */
@@ -136,6 +138,10 @@
                 hitAccuracyRating: "standby"
             }
         });
+
+        for (const gameNote of gameChart) {
+            gameNote.time += global.musicPlayerData.song.offset;
+        }
 
         // Mark sync notes
         for (let i = 1; i < gameChart.length; i++) {
@@ -303,7 +309,7 @@
         }
     }
 
-    /** Fade out for 1 second and switch to Song Select screen */
+    /** Fade out for 1 second and switch to song select screen */
     async function exit() {
         // Stop drawing
         if (drawLoopID !== null) {

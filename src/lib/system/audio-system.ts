@@ -21,10 +21,10 @@ export let musicSource: AudioBufferSourceNode | null = null;
 
 
 
-/** Try to initialize audio context and effect nodes (fails if already initialized) */
-export function initializeAudioContext(): boolean {
-    // Fail if already initialized
-    if (audioContext !== null) return false;
+/** Try to initialize audio context and the persistent nodes in the audio graph (fails if everything is already initialized) */
+export function initializeAudioSystem(): boolean {
+    // Fail if everything is already initialized
+    if (audioContext !== null && latencyDelayNode !== null && hitsoundsVolumeNode !== null && soundEffectsVolumeNode !== null && analyserNode !== null && analyserDelayNode !== null) return false;
 
     // Initialize audio context
     audioContext = new AudioContext({ latencyHint: "interactive" });

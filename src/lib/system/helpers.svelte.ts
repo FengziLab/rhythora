@@ -35,38 +35,35 @@ export function returnToReturnScreen(resume = true) {
 /**
  * Svelte action: focus trap 
  * 
- * Used code from the Svelte tutorial, slightly edited
+ * Used code from the Svelte tutorial, edited
  * @see https://svelte.dev/tutorial/svelte/actions
  */
-export function trapFocus(node: HTMLElement) {
+export function focusTrap(node: HTMLElement) {
     const previous = document.activeElement as HTMLElement | null;
-
-    function focusable(): HTMLElement[] {
-        return Array.from(node.querySelectorAll("button, [href], input, select, textarea, [tabindex]:not([tabindex='-1'])"));
-    }
 
     function handleKeydown(event: KeyboardEvent) {
         if (event.key !== "Tab") return;
 
         const current = document.activeElement;
 
-        const elements = focusable();
+        const elements = Array.from(node.querySelectorAll("button, [href], input, select, textarea, [tabindex]:not([tabindex='-1'])")) as HTMLElement[];
         const first = elements.at(0);
         const last = elements.at(-1)
 
         if (event.shiftKey && current === first && last !== undefined) {
-            last.focus();
             event.preventDefault();
+            last.focus();
         }
 
         if (!event.shiftKey && current === last && first !== undefined) {
-            first.focus();
             event.preventDefault();
+            first.focus();
         }
     }
 
     $effect(() => {
-        focusable()[0]?.focus();
+        node.focus();
+        node.blur();
         node.addEventListener("keydown", handleKeydown);
 
         return () => {

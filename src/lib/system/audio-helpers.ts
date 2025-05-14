@@ -1,4 +1,4 @@
-import { audioContext, hitsoundsVolumeNode, soundEffectsVolumeNode, soundBuffers, musicSource, initializeAudioContext, loadMusicSource, unloadMusicSource } from "./audio-system";
+import { audioContext, hitsoundsVolumeNode, soundEffectsVolumeNode, soundBuffers, musicSource, initializeAudioSystem, loadMusicSource, unloadMusicSource } from "./audio-system";
 import { global } from "$lib/system/global.svelte";
 import type { MusicData } from "$lib/system/types";
 
@@ -7,7 +7,7 @@ let latestLoadTime = -1;
 /** Fade out current music, load audio link, then play the new one (fails if unable to load or swap to new music) */
 export async function loadNewMusic(musicData: MusicData, play = false, fadeOutSeconds = -1, fadeInSeconds = -1): Promise<boolean> {
     // Check and initialize the audio context in case it's not initialized
-    initializeAudioContext();
+    initializeAudioSystem();
     if (audioContext!.state === "suspended") await audioContext!.resume(); // NOTE: guaranteed audioContext so make ts happy
 
     // ID the load to later check if we're the latest
