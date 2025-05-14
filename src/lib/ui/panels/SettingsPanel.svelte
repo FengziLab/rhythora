@@ -39,7 +39,7 @@
     }
     /** (Show debug panel) */
     function showDebugPanelHandler() {
-        global.isDebugPanelShowing = true;
+        global.isDebugPanelShowing = !global.isDebugPanelShowing;
     }
 </script>
 
@@ -118,7 +118,7 @@
             {@render separator("Maintenance")}
 
             <div class="w-full flex flex-col flex-nowrap gap-4">
-                <button onclick={showDebugPanelHandler} class="w-full h-12 rounded-full bg-zinc-700 hover:brightness-115 active:translate-y-1 transition duration-150 ease-circ-out text-zinc-50 font-poppins tracking-wide select-none">Show Debug Panel</button>
+                <button onclick={showDebugPanelHandler} class="w-full h-12 rounded-full bg-zinc-700 hover:brightness-115 active:translate-y-1 transition duration-150 ease-circ-out text-zinc-50 font-poppins tracking-wide select-none">{global.isDebugPanelShowing === false ? "Show" : "Hide"} Debug Panel</button>
             </div>
         </div>
     </div>
