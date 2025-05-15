@@ -21,6 +21,7 @@ export interface Global {
 }
 
 export interface UserSettings {
+    mainVolume: number,
     musicVolume: number,
     hitsoundsVolume: number,
     soundEffectsVolume: number,

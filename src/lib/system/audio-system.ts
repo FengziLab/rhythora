@@ -7,6 +7,7 @@ import type { SoundBuffers } from "./types";
 export let audioContext: AudioContext | null = null;
 
 // Effect nodes
+export let mainVolumeNode: GainNode | null = null;
 export let latencyDelayNode: DelayNode | null = null;
 export let musicVolumeNode: GainNode | null = null; // special: comes with each music source
 export let hitsoundsVolumeNode: GainNode | null = null;
@@ -24,12 +25,15 @@ export let musicSource: AudioBufferSourceNode | null = null;
 /** Try to initialize audio context and the persistent nodes in the audio graph (fails if everything is already initialized) */
 export function initializeAudioSystem(): boolean {
     // Fail if everything is already initialized
-    if (audioContext !== null && latencyDelayNode !== null && hitsoundsVolumeNode !== null && soundEffectsVolumeNode !== null && analyserNode !== null && analyserDelayNode !== null) return false;
+    if (audioContext !== null && mainVolumeNode !== null && latencyDelayNode !== null && hitsoundsVolumeNode !== null && soundEffectsVolumeNode !== null && analyserNode !== null && analyserDelayNode !== null) return false;
 
     // Initialize audio context
     audioContext = new AudioContext({ latencyHint: "interactive" });
 
     // Initialize effect nodes other than music volume node
+    mainVolumeNode = new GainNode(audioContext, {
+        gain: global.userSettings.mainVolume
+    });
     latencyDelayNode = new DelayNode(audioContext, {
         delayTime: Math.max(0, -global.userSettings.audioDisplacementMs / 1000)
     });
@@ -47,14 +51,21 @@ export function initializeAudioSystem(): boolean {
     });
 
     // Connect effect nodes other than music volume
-    latencyDelayNode.connect(audioContext.destination);
+    mainVolumeNode.connect(audioContext.destination);
+    latencyDelayNode.connect(mainVolumeNode);
     hitsoundsVolumeNode.connect(latencyDelayNode);
-    soundEffectsVolumeNode.connect(audioContext.destination);
+    soundEffectsVolumeNode.connect(mainVolumeNode);
     analyserDelayNode.connect(analyserNode);
 
     return true;
 }
 
+/** Fade to a main volume over a set time (fails if missing components) */
+export function fadeToMainVolume(value: number, seconds = -1): boolean {
+    if (audioContext === null || mainVolumeNode === null) return false;
+    mainVolumeNode.gain.linearRampToValueAtTime(value, audioContext.currentTime + Math.max(0, seconds));
+    return true;
+}
 /** Fade to a music volume over a set time (fails if missing components) */
 export function fadeToMusicVolume(value: number, seconds = -1): boolean {
     if (audioContext === null || musicVolumeNode === null) return false;
@@ -81,7 +92,7 @@ export function loadMusicSource(audioBuffer: AudioBuffer | null = null, play = f
     // Fail if there exists a current music volume node or music source node
     if (musicVolumeNode !== null || musicSource !== null) return false;    
 
-    // Create nodes and connect to audio graph
+    // Create music nodes and connect to audio graph
     if (audioBuffer !== null) {
         musicBuffer = audioBuffer;
     } else if (musicBuffer === null) {

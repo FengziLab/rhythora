@@ -67,6 +67,10 @@
             {@render separator("Audio")}
 
             <div class="w-full flex flex-col flex-nowrap gap-2">
+                <p class="text-zinc-50 font-poppins tracking-wide select-none">Main Volume (%)</p>
+                <VolumeSlider userSettingToUpdate="mainVolume" value={global.userSettings.mainVolume} min={0} max={1} step={0.01} displayMultiplier={100} />
+            </div>
+            <div class="w-full flex flex-col flex-nowrap gap-2">
                 <p class="text-zinc-50 font-poppins tracking-wide select-none">Music Volume (%)</p>
                 <VolumeSlider userSettingToUpdate="musicVolume" value={global.userSettings.musicVolume} min={0} max={1} step={0.01} displayMultiplier={100} />
             </div>
@@ -125,7 +129,7 @@
 
     <!-- Info -->
     <div class="mt-16 mb-4 flex flex-col flex-nowrap gap-0">
-        <p class="text-center text-zinc-500 text-sm font-comfortaa select-none">Rhythora Beta 20250513</p>
+        <p class="text-center text-zinc-500 text-sm font-comfortaa select-none">Rhythora Beta 20250514</p>
         <p class="text-center text-zinc-500 text-sm font-comfortaa select-none">A <a href="https://fengzi.dev/" target="_blank" rel="noreferrer" class="hover:text-zinc-400 transition transition-100 ease-circ-out">Fengzi Lab</a> project</p>
     </div>
 </div>

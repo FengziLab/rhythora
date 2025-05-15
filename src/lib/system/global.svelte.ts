@@ -1,11 +1,12 @@
-import { fadeToMusicVolume, fadeToHitsoundsVolume, fadeToSoundEffectsVolume, latencyDelayNode, analyserDelayNode } from "./audio-system";
+import { fadeToMainVolume, fadeToMusicVolume, fadeToHitsoundsVolume, fadeToSoundEffectsVolume, latencyDelayNode, analyserDelayNode } from "./audio-system";
 import type { Global, UserSettings, Screen, ScreenTransitionMode } from "./types";
 
 /* Default settings */
 export const DEFAULT_SETTINGS: UserSettings = {
-    musicVolume: 0.9,
-    hitsoundsVolume: 0.5,
-    soundEffectsVolume: 0.9,
+    mainVolume: 0.6,
+    musicVolume: 1,
+    hitsoundsVolume: 0.8,
+    soundEffectsVolume: 1,
     audioDisplacementMs: 0,
     inputDisplacementMs: 0,
     fpsCounter: false,
@@ -41,7 +42,7 @@ export const global: Global = $state({
     returnScreen: null,
     gameScreenStatus: "inactive",
     isDebugPanelShowing: false,
-    isDebugPanelPassthroughEnabled: false,
+    isDebugPanelPassthroughEnabled: true,
     debugMessage: "Rhythora Debug",
     debugTriggerCount: 0
 });
@@ -54,6 +55,9 @@ export function setUserSetting<UserSetting extends keyof UserSettings>(setting: 
 
     // Process specific side effects
     switch (setting) {
+        case "mainVolume":
+            fadeToMainVolume(newValue as number, -1); // NOTE: validated value type so make ts happy
+            break;
         case "musicVolume":
             fadeToMusicVolume(newValue as number, -1); // NOTE: validated value type so make ts happy
             break;

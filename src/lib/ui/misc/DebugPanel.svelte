@@ -7,8 +7,8 @@
     // Local states
     const UPDATE_INTERVAL_MS = 100;
 
-    let displayTextCol1 = $state("Debug");
-    let displayTextCol2 = $state("Debug");
+    let displayTextCol1 = $state("Bad browser");
+    let displayTextCol2 = $state(">:(");
     let updateIntervalID: number;
     let tpsCount = $state(0);
     let tpsIntervalID: number;
